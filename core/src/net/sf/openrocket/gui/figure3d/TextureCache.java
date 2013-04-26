@@ -24,11 +24,15 @@ public class TextureCache {
 	private Map<String, Texture> texCache = null;
 	
 	public void init(GLAutoDrawable drawable) {
+		if (texCache != null)
+			throw new IllegalStateException(this + " already initialized.");
 		oldTexCache = new HashMap<String, Texture>();
 		texCache = new HashMap<String, Texture>();
 	}
 	
 	public void dispose(GLAutoDrawable drawable) {
+		if (texCache == null)
+			throw new IllegalStateException(this + " not initialized.");
 		flushTextureCache(drawable);
 		oldTexCache = null;
 		texCache = null;
