@@ -24,16 +24,15 @@ import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
-import javax.swing.JSpinner;
 import javax.swing.event.MouseInputAdapter;
 
 import net.sf.openrocket.database.ComponentPresetDatabase;
 import net.sf.openrocket.document.OpenRocketDocument;
 import net.sf.openrocket.file.GeneralRocketLoader;
-import net.sf.openrocket.gui.adaptors.DoubleModel;
 import net.sf.openrocket.gui.figure3d.geometry.FlameRenderer;
 import net.sf.openrocket.gui.main.Splash;
 import net.sf.openrocket.gui.util.BlockingMotorDatabaseProvider;
+import net.sf.openrocket.gui.util.GUIUtil;
 import net.sf.openrocket.gui.util.SwingPreferences;
 import net.sf.openrocket.l10n.ResourceBundleTranslator;
 import net.sf.openrocket.logging.LogHelper;
@@ -44,7 +43,6 @@ import net.sf.openrocket.startup.Application;
 import net.sf.openrocket.startup.ApplicationModule;
 import net.sf.openrocket.startup.ApplicationModule2;
 import net.sf.openrocket.startup.MotorDatabaseLoader;
-import net.sf.openrocket.unit.UnitGroup;
 import net.sf.openrocket.util.AbstractChangeSource;
 import net.sf.openrocket.util.Coordinate;
 import net.sf.openrocket.util.MathUtil;
@@ -60,6 +58,8 @@ import com.jogamp.opengl.util.texture.TextureIO;
 public class PhotoBooth extends JPanel implements GLEventListener {
 	
 	public static void main(String args[]) throws Exception {
+		GUIUtil.setBestLAF();
+		
 		Application.setBaseTranslator(new ResourceBundleTranslator(
 				"l10n.messages"));
 		Application.setPreferences(new SwingPreferences());
@@ -93,10 +93,10 @@ public class PhotoBooth extends JPanel implements GLEventListener {
 		
 		ff.setVisible(true);
 		
-		while (true) {
+		/*while (true) {
 			Thread.sleep(10);
 			pb.p.setYaw(pb.p.getYaw() + .01);
-		}
+		}*/
 	}
 	
 	private static final long serialVersionUID = 1L;
@@ -112,13 +112,15 @@ public class PhotoBooth extends JPanel implements GLEventListener {
 	private final Configuration configuration;
 	private GLCanvas canvas;
 	
-	private static final double fovY = 70.0;
+	private static final double fovY = 60.0;
 	private static double fovX = Double.NaN;
 	
 	public static class Photo extends AbstractChangeSource {
 		private double roll = 0;
 		private double yaw = 0;
-		private double pitch = 0;
+		private double pitch = Math.PI / 2.0;
+		private double viewDir;
+		private double viewDistanceX = .5;
 		
 		public double getRoll() {
 			return roll;
@@ -144,6 +146,24 @@ public class PhotoBooth extends JPanel implements GLEventListener {
 		
 		public void setPitch(double pitch) {
 			this.pitch = pitch;
+			fireChangeEvent();
+		}
+		
+		public double getViewDir() {
+			return viewDir;
+		}
+		
+		public void setViewDir(double viewDir) {
+			this.viewDir = viewDir;
+			fireChangeEvent();
+		}
+		
+		public double getViewDistanceX() {
+			return viewDistanceX;
+		}
+		
+		public void setViewDistanceX(double viewDistanceX) {
+			this.viewDistanceX = viewDistanceX;
 			fireChangeEvent();
 		}
 	}
@@ -175,10 +195,8 @@ public class PhotoBooth extends JPanel implements GLEventListener {
 				PhotoBooth.this.repaint();
 			}
 		});
-		DoubleModel yawModel = new DoubleModel(p, "Yaw", UnitGroup.UNITS_ANGLE);
-		JSpinner yaw = new JSpinner(yawModel.getSpinnerModel());
-		this.add(yaw, BorderLayout.SOUTH);
 		
+		this.add(new PhotoConfigPanel(p), BorderLayout.EAST);
 		
 	}
 	
@@ -274,6 +292,9 @@ public class PhotoBooth extends JPanel implements GLEventListener {
 		}
 		
 		gl.glLoadIdentity();
+		
+		//Draw the sky
+		gl.glPushMatrix();
 		gl.glBlendFunc(GL.GL_SRC_ALPHA, GL.GL_ONE_MINUS_SRC_ALPHA);
 		gl.glDisable(GLLightingFunc.GL_LIGHTING);
 		sky.enable(gl);
@@ -282,17 +303,36 @@ public class PhotoBooth extends JPanel implements GLEventListener {
 		GLUquadric q = glu.gluNewQuadric();
 		glu.gluQuadricTexture(q, true);
 		glu.gluQuadricOrientation(q, GLU.GLU_OUTSIDE);
-		gl.glPushMatrix();
+		gl.glRotated(p.getViewDir() * (180.0 / Math.PI), 0, 1, 0);
 		gl.glRotatef(90, 1, 0, 0);
-		gl.glRotated(p.getYaw() * (180.0 / Math.PI), 0, 0, -1);
-		glu.gluSphere(q, 7f, 100, 100);
-		gl.glPopMatrix();
+		gl.glTranslated(0, 0, 0);
+		gl.glDepthMask(false);
+		glu.gluSphere(q, 1f, 100, 100);
+		gl.glDepthMask(true);
 		sky.disable(gl);
 		gl.glEnable(GLLightingFunc.GL_LIGHTING);
+		gl.glPopMatrix();
 		
-		setupView(gl, glu);
+		
+		
+		glu.gluLookAt(0, 0, p.getViewDistanceX(), 0, 0, 0, 0, 1, 0);
+		
+		
+		//Change to LEFT Handed coordinates
+		gl.glScaled(1, 1, -1);
+		gl.glFrontFace(GL.GL_CW);
+		
+		//Flip textures for LEFT handed coords
+		gl.glMatrixMode(GL.GL_TEXTURE);
+		gl.glLoadIdentity();
+		gl.glScaled(-1, 1, 1);
+		gl.glTranslated(-1, 0, 0);
+		gl.glMatrixMode(GLMatrixFunc.GL_MODELVIEW);
+		
+		gl.glRotated(-p.getViewDir() * (180.0 / Math.PI), 0, 1, 0);
+		
+		setupModel(gl);
 		rr.render(drawable, configuration, new HashSet<RocketComponent>());
-		
 		FlameRenderer.f(gl);
 		
 	}
@@ -388,44 +428,16 @@ public class PhotoBooth extends JPanel implements GLEventListener {
 		}
 	}
 	
-	private void setupView(final GL2 gl, final GLU glu) {
-		gl.glLoadIdentity();
-		
-		//gl.glLightfv(GLLightingFunc.GL_LIGHT1, GLLightingFunc.GL_POSITION,
-		//lightPosition, 0);
-		
+	
+	
+	private void setupModel(final GL2 gl) {
 		// Get the bounds
 		final Bounds b = calculateBounds();
-		
-		// Calculate the distance needed to fit the bounds in both the X and Y
-		// direction
-		// Add 10% for space around it.
-		final double dX = (b.xSize * 1.2 / 2.0)
-				/ Math.tan(Math.toRadians(fovX / 2.0));
-		final double dY = (b.rMax * 2.0 * 1.2 / 2.0)
-				/ Math.tan(Math.toRadians(fovY / 2.0));
-		
-		// Move back the greater of the 2 distances
-		glu.gluLookAt(0, 0, .5, 0, 0, 0, 0, 1, 0);
-		
-		gl.glRotated(p.getPitch() * (180.0 / Math.PI), 0, 0, 1);
+		gl.glRotated(-p.getPitch() * (180.0 / Math.PI), 0, 0, 1);
 		gl.glRotated(p.getYaw() * (180.0 / Math.PI), 0, 1, 0);
 		gl.glRotated(p.getRoll() * (180.0 / Math.PI), 1, 0, 0);
-		
-		
 		// Center the rocket in the view.
 		gl.glTranslated(-b.xMin - b.xSize / 2.0, 0, 0);
-		
-		//Change to LEFT Handed coordinates
-		gl.glScaled(1, 1, -1);
-		gl.glFrontFace(GL.GL_CW);
-		
-		//Flip textures for LEFT handed coords
-		gl.glMatrixMode(GL.GL_TEXTURE);
-		gl.glLoadIdentity();
-		gl.glScaled(-1, 1, 1);
-		gl.glTranslated(-1, 0, 0);
-		gl.glMatrixMode(GLMatrixFunc.GL_MODELVIEW);
 	}
 	
 	/**

@@ -116,7 +116,14 @@ package net.sf.openrocket.gui.figure3d.geometry;
 
 import javax.media.opengl.GL;
 import javax.media.opengl.GL2;
+import javax.media.opengl.GLProfile;
 import javax.media.opengl.fixedfunc.GLLightingFunc;
+import javax.media.opengl.glu.GLU;
+import javax.media.opengl.glu.GLUquadric;
+
+import com.jogamp.opengl.util.texture.Texture;
+import com.jogamp.opengl.util.texture.TextureData;
+import com.jogamp.opengl.util.texture.TextureIO;
 
 public final class FlameRenderer {
 	
@@ -129,17 +136,28 @@ public final class FlameRenderer {
 		public void getColor(double z, float[] color);
 	}
 	
+	static Texture noise;
+	
 	public static void f(GL2 gl) {
+		
+		if (noise == null) {
+			try {
+				TextureData data = TextureIO.newTextureData(GLProfile.getDefault(), FlameRenderer.class.getResourceAsStream("snoise.png"), GL.GL_RGBA, GL.GL_RGBA, true, null);
+				noise = TextureIO.newTexture(data);
+			} catch (Exception e1) {
+				e1.printStackTrace();
+			}
+		}
+		
 		gl.glBlendFunc(GL.GL_SRC_ALPHA, GL.GL_ONE_MINUS_SRC_ALPHA);
 		gl.glEnable(GL.GL_BLEND);
 		gl.glDisable(GLLightingFunc.GL_LIGHTING);
 		gl.glRotated(90, 0, 1, 0);
 		gl.glTranslated(0, 0, .41);
 		
-		//glu.gluCylinder(q, 0, .01, .1, 80, 10);
 		
 		
-		
+		gl.glPushMatrix();
 		
 		gl.glScaled(.03, .03, .07);
 		gl.glBlendFunc(GL.GL_SRC_ALPHA, GL.GL_ONE);
@@ -173,24 +191,47 @@ public final class FlameRenderer {
 				color[3] = (1 - (float) (z));
 			}
 		}, 80, 80);
+		gl.glPopMatrix();
+		
+		
+		
 		
 		gl.glBlendFunc(GL.GL_SRC_ALPHA, GL.GL_ONE_MINUS_SRC_ALPHA);
-		gl.glScaled(1, 1, 10);
-		drawFlame(gl, 1, new Radius() {
-			@Override
-			public double getRadius(double z) {
-				return .1 + Math.atan(z * 3);
-			}
-			
-			@Override
-			public void getColor(double z, float[] color) {
-				color[0] = (float) (1 - z / 2);
-				color[1] = (float) (1 - z / 2);
-				color[2] = (float) (1 - z / 2);
-				color[3] = (float) (Math.sqrt(z));
-			}
-		}, 80, 80);
+		GLU glu = new GLU();
+		GLUquadric q = glu.gluNewQuadric();
+		glu.gluQuadricTexture(q, true);
+		float[] color = { .9f, .9f, .9f, .4f };
+		gl.glColor4fv(color, 0);
+		noise.enable(gl);
+		noise.bind(gl);
 		
+		double z = .02;
+		double v = 0;
+		double r = 0;
+		for (int i = 0; i < 80; i++) {
+			if (z < 2) {
+				v = z * .1;
+				r = .1 * z + .005;
+			} else {
+				v += .01;
+			}
+			if (i < 40)
+				color[3] = Math.min(1, color[3] + .01f);
+			else
+				color[3] = color[3] * .9f;
+			gl.glColor4fv(color, 0);
+			for (int j = 0; j < 3; j++) {
+				gl.glPushMatrix();
+				gl.glTranslated(Math.random() * v - v / 2, Math.random() * v - v / 2, z + Math.random() * v - v / 2);
+				gl.glRotated(Math.random(), 1, 0, 0);
+				gl.glRotated(Math.random(), 0, 1, 0);
+				glu.gluSphere(q, r, 10, 10);
+				gl.glPopMatrix();
+			}
+			z = z + r;
+		}
+		
+		noise.disable(gl);
 		
 		gl.glEnable(GLLightingFunc.GL_LIGHTING);
 	}
