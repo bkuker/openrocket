@@ -52,53 +52,8 @@ import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Module;
 import com.jogamp.opengl.util.texture.Texture;
-import com.jogamp.opengl.util.texture.TextureData;
-import com.jogamp.opengl.util.texture.TextureIO;
 
 public class PhotoBooth extends JPanel implements GLEventListener {
-	
-	public static void main(String args[]) throws Exception {
-		GUIUtil.setBestLAF();
-		
-		Application.setBaseTranslator(new ResourceBundleTranslator(
-				"l10n.messages"));
-		Application.setPreferences(new SwingPreferences());
-		Module applicationModule = new ApplicationModule();
-		Module pluginModule = new PluginModule();
-		Injector injector = Guice.createInjector(applicationModule, pluginModule);
-		Application.setInjector(injector);
-		MotorDatabaseLoader bg = injector.getInstance(MotorDatabaseLoader.class);
-		bg.startLoading();
-		BlockingMotorDatabaseProvider db = new BlockingMotorDatabaseProvider(bg);
-		ApplicationModule2 module = new ApplicationModule2(db);
-		Injector injector2 = injector.createChildInjector(module);
-		Application.setInjector(injector2);
-		ComponentPresetDatabase componentPresetDao = new ComponentPresetDatabase() {
-			@Override
-			protected void load() {
-			}
-		};
-		Application.setComponentPresetDao(componentPresetDao);
-		
-		
-		GeneralRocketLoader grl = new GeneralRocketLoader(new File("C:\\Users\\bkuker\\git\\openrocket\\core\\resources\\datafiles\\examples\\A simple model rocket.ork"));
-		OpenRocketDocument doc = grl.load();
-		
-		JFrame ff = new JFrame();
-		ff.setSize(1024, 768);
-		ff.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		
-		PhotoBooth pb = new PhotoBooth(doc, doc.getDefaultConfiguration());
-		ff.setContentPane(pb);
-		
-		ff.setVisible(true);
-		
-		/*while (true) {
-			Thread.sleep(10);
-			pb.p.setYaw(pb.p.getYaw() + .01);
-		}*/
-	}
-	
 	private static final long serialVersionUID = 1L;
 	private static final LogHelper log = Application.getLogger();
 	
@@ -111,16 +66,19 @@ public class PhotoBooth extends JPanel implements GLEventListener {
 	
 	private final Configuration configuration;
 	private GLCanvas canvas;
-	
-	private static final double fovY = 60.0;
-	private static double fovX = Double.NaN;
+	private TextureCache textureCache = new TextureCache();
+	private double ratio;
 	
 	public static class Photo extends AbstractChangeSource {
 		private double roll = 0;
 		private double yaw = 0;
 		private double pitch = Math.PI / 2.0;
-		private double viewDir;
-		private double viewDistanceX = .5;
+		private double viewAlt;
+		private double viewAz;
+		private double viewDistance = .5;
+		private double fov = Math.PI / 3.0;
+		private double lightAlt;
+		private double lightAz;
 		
 		public double getRoll() {
 			return roll;
@@ -149,28 +107,64 @@ public class PhotoBooth extends JPanel implements GLEventListener {
 			fireChangeEvent();
 		}
 		
-		public double getViewDir() {
-			return viewDir;
+		public double getViewAlt() {
+			return viewAlt;
 		}
 		
-		public void setViewDir(double viewDir) {
-			this.viewDir = viewDir;
+		public void setViewAlt(double viewAlt) {
+			this.viewAlt = viewAlt;
 			fireChangeEvent();
 		}
 		
-		public double getViewDistanceX() {
-			return viewDistanceX;
+		public double getViewAz() {
+			return viewAz;
 		}
 		
-		public void setViewDistanceX(double viewDistanceX) {
-			this.viewDistanceX = viewDistanceX;
+		public void setViewAz(double viewAz) {
+			this.viewAz = viewAz;
+			fireChangeEvent();
+		}
+		
+		public double getViewDistance() {
+			return viewDistance;
+		}
+		
+		public void setViewDistance(double viewDistance) {
+			this.viewDistance = viewDistance;
+			fireChangeEvent();
+		}
+		
+		public double getFov() {
+			return fov;
+		}
+		
+		public void setFov(double fov) {
+			this.fov = fov;
+			fireChangeEvent();
+		}
+		
+		public double getLightAlt() {
+			return lightAlt;
+		}
+		
+		public void setLightAlt(double lightAlt) {
+			this.lightAlt = lightAlt;
+			fireChangeEvent();
+		}
+		
+		public double getLightAz() {
+			return lightAz;
+		}
+		
+		public void setLightAz(double lightAz) {
+			this.lightAz = lightAz;
 			fireChangeEvent();
 		}
 	}
 	
 	RocketRenderer rr;
 	Photo p;
-	Texture sky;
+	
 	
 	public PhotoBooth(final OpenRocketDocument doc, final Configuration config) {
 		this.configuration = config;
@@ -280,16 +274,10 @@ public class PhotoBooth extends JPanel implements GLEventListener {
 		gl.glClearColor(1, 1, 1, 1);
 		gl.glClear(GL.GL_COLOR_BUFFER_BIT | GL.GL_DEPTH_BUFFER_BIT);
 		
-		
-		
-		if (sky == null) {
-			try {
-				TextureData data = TextureIO.newTextureData(GLProfile.getDefault(), PhotoBooth.class.getResourceAsStream("sky.png"), GL.GL_RGBA, GL.GL_RGBA, true, null);
-				sky = TextureIO.newTexture(data);
-			} catch (Exception e1) {
-				e1.printStackTrace();
-			}
-		}
+		gl.glMatrixMode(GLMatrixFunc.GL_PROJECTION);
+		gl.glLoadIdentity();
+		glu.gluPerspective(p.getFov() * (180.0 / Math.PI), ratio, 0.1f, 50f);
+		gl.glMatrixMode(GLMatrixFunc.GL_MODELVIEW);
 		
 		gl.glLoadIdentity();
 		
@@ -297,13 +285,17 @@ public class PhotoBooth extends JPanel implements GLEventListener {
 		gl.glPushMatrix();
 		gl.glBlendFunc(GL.GL_SRC_ALPHA, GL.GL_ONE_MINUS_SRC_ALPHA);
 		gl.glDisable(GLLightingFunc.GL_LIGHTING);
+		Texture sky = textureCache.getTexture(PhotoBooth.class.getResource("sky.png"));
 		sky.enable(gl);
 		sky.bind(gl);
 		gl.glColor3d(1, 1, 1);
 		GLUquadric q = glu.gluNewQuadric();
 		glu.gluQuadricTexture(q, true);
 		glu.gluQuadricOrientation(q, GLU.GLU_OUTSIDE);
-		gl.glRotated(p.getViewDir() * (180.0 / Math.PI), 0, 1, 0);
+		
+		gl.glRotated(p.getViewAlt() * (180.0 / Math.PI), 1, 0, 0);
+		gl.glRotated(p.getViewAz() * (180.0 / Math.PI), 0, 1, 0);
+		
 		gl.glRotatef(90, 1, 0, 0);
 		gl.glTranslated(0, 0, 0);
 		gl.glDepthMask(false);
@@ -314,8 +306,7 @@ public class PhotoBooth extends JPanel implements GLEventListener {
 		gl.glPopMatrix();
 		
 		
-		
-		glu.gluLookAt(0, 0, p.getViewDistanceX(), 0, 0, 0, 0, 1, 0);
+		glu.gluLookAt(0, 0, p.getViewDistance(), 0, 0, 0, 0, 1, 0);
 		
 		
 		//Change to LEFT Handed coordinates
@@ -329,9 +320,22 @@ public class PhotoBooth extends JPanel implements GLEventListener {
 		gl.glTranslated(-1, 0, 0);
 		gl.glMatrixMode(GLMatrixFunc.GL_MODELVIEW);
 		
-		gl.glRotated(-p.getViewDir() * (180.0 / Math.PI), 0, 1, 0);
+		gl.glRotated(-p.getViewAlt() * (180.0 / Math.PI), 1, 0, 0);
+		gl.glRotated(-p.getViewAz() * (180.0 / Math.PI), 0, 1, 0);
+		
+		float[] lightPosition = new float[] {
+				(float) Math.cos(p.getLightAlt()) * (float) Math.sin(p.getLightAz()),//
+				(float) Math.sin(p.getLightAlt()),//
+				(float) Math.cos(p.getLightAlt()) * (float) Math.cos(p.getLightAz()) //
+		};
+		
+		gl.glLightfv(GLLightingFunc.GL_LIGHT1, GLLightingFunc.GL_POSITION,
+				lightPosition, 0);
 		
 		setupModel(gl);
+		
+		
+		
 		rr.render(drawable, configuration, new HashSet<RocketComponent>());
 		FlameRenderer.f(gl);
 		
@@ -341,6 +345,7 @@ public class PhotoBooth extends JPanel implements GLEventListener {
 	public void dispose(final GLAutoDrawable drawable) {
 		log.verbose("GL - dispose() called");
 		rr.dispose(drawable);
+		textureCache.dispose(drawable);
 	}
 	
 	@Override
@@ -368,22 +373,14 @@ public class PhotoBooth extends JPanel implements GLEventListener {
 		gl.glEnable(GLLightingFunc.GL_NORMALIZE);
 		
 		rr.init(drawable);
+		textureCache.init(drawable);
 		
 	}
 	
 	@Override
 	public void reshape(final GLAutoDrawable drawable, final int x, final int y, final int w, final int h) {
 		log.verbose("GL - reshape()");
-		final GL2 gl = drawable.getGL().getGL2();
-		final GLU glu = new GLU();
-		
-		final double ratio = (double) w / (double) h;
-		fovX = fovY * ratio;
-		
-		gl.glMatrixMode(GLMatrixFunc.GL_PROJECTION);
-		gl.glLoadIdentity();
-		glu.gluPerspective(fovY, ratio, 0.1f, 50f);
-		gl.glMatrixMode(GLMatrixFunc.GL_MODELVIEW);
+		ratio = (double) w / (double) h;
 	}
 	
 	@SuppressWarnings("unused")
@@ -466,4 +463,37 @@ public class PhotoBooth extends JPanel implements GLEventListener {
 		internalRepaint();
 	}
 	
+	public static void main(String args[]) throws Exception {
+		GUIUtil.setBestLAF();
+		Application.setBaseTranslator(new ResourceBundleTranslator(
+				"l10n.messages"));
+		Application.setPreferences(new SwingPreferences());
+		Module applicationModule = new ApplicationModule();
+		Module pluginModule = new PluginModule();
+		Injector injector = Guice.createInjector(applicationModule, pluginModule);
+		Application.setInjector(injector);
+		MotorDatabaseLoader bg = injector.getInstance(MotorDatabaseLoader.class);
+		bg.startLoading();
+		BlockingMotorDatabaseProvider db = new BlockingMotorDatabaseProvider(bg);
+		ApplicationModule2 module = new ApplicationModule2(db);
+		Injector injector2 = injector.createChildInjector(module);
+		Application.setInjector(injector2);
+		ComponentPresetDatabase componentPresetDao = new ComponentPresetDatabase() {
+			@Override
+			protected void load() {
+			}
+		};
+		Application.setComponentPresetDao(componentPresetDao);
+		
+		GeneralRocketLoader grl = new GeneralRocketLoader(new File("C:\\Users\\bkuker\\git\\openrocket\\core\\resources\\datafiles\\examples\\A simple model rocket.ork"));
+		OpenRocketDocument doc = grl.load();
+		
+		JFrame ff = new JFrame();
+		ff.setSize(1024, 768);
+		ff.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		
+		PhotoBooth pb = new PhotoBooth(doc, doc.getDefaultConfiguration());
+		ff.setContentPane(pb);
+		ff.setVisible(true);
+	}
 }

@@ -36,15 +36,37 @@ public class PhotoConfigPanel extends JPanel {
 		
 		add(new StyledLabel("Camera", Style.BOLD), "wrap");
 		
-		add(new JLabel("View Direction"));
-		DoubleModel viewDirModel = new DoubleModel(p, "ViewDir", UnitGroup.UNITS_ANGLE);
-		add(new JSpinner(viewDirModel.getSpinnerModel()), "w 40");
-		add(new UnitSelector(viewDirModel), "wrap");
+		add(new JLabel("View Azimuth"));
+		DoubleModel viewAzModel = new DoubleModel(p, "ViewAz", UnitGroup.UNITS_ANGLE);
+		add(new JSpinner(viewAzModel.getSpinnerModel()), "w 40");
+		add(new UnitSelector(viewAzModel), "wrap");
+		
+		add(new JLabel("View Altitude"));
+		DoubleModel viewAltModle = new DoubleModel(p, "ViewAlt", UnitGroup.UNITS_ANGLE);
+		add(new JSpinner(viewAltModle.getSpinnerModel()), "w 40");
+		add(new UnitSelector(viewAltModle), "wrap");
 		
 		add(new JLabel("View Distance"));
-		DoubleModel viewDistanceXModel = new DoubleModel(p, "ViewDistanceX", UnitGroup.UNITS_LENGTH);
-		add(new JSpinner(viewDistanceXModel.getSpinnerModel()), "w 40");
-		add(new UnitSelector(viewDistanceXModel), "wrap");
+		DoubleModel viewDistanceModel = new DoubleModel(p, "ViewDistance", UnitGroup.UNITS_LENGTH);
+		add(new JSpinner(viewDistanceModel.getSpinnerModel()), "w 40");
+		add(new UnitSelector(viewDistanceModel), "wrap");
+		
+		add(new JLabel("FoV"));
+		DoubleModel fovModel = new DoubleModel(p, "Fov", UnitGroup.UNITS_ANGLE);
+		add(new JSpinner(fovModel.getSpinnerModel()), "w 40");
+		add(new UnitSelector(fovModel), "wrap");
+		
+		add(new StyledLabel("Light", Style.BOLD), "wrap");
+		
+		add(new JLabel("Light Azimuth"));
+		DoubleModel lightAzModel = new DoubleModel(p, "LightAz", UnitGroup.UNITS_ANGLE);
+		add(new JSpinner(lightAzModel.getSpinnerModel()), "w 40");
+		add(new UnitSelector(lightAzModel), "wrap");
+		
+		add(new JLabel("Light Altitude"));
+		DoubleModel lightAltModle = new DoubleModel(p, "LightAlt", UnitGroup.UNITS_ANGLE);
+		add(new JSpinner(lightAltModle.getSpinnerModel()), "w 40");
+		add(new UnitSelector(lightAltModle), "wrap");
 		
 	}
 }
