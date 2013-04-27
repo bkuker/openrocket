@@ -19,7 +19,6 @@ import javax.media.opengl.awt.GLCanvas;
 import javax.media.opengl.fixedfunc.GLLightingFunc;
 import javax.media.opengl.fixedfunc.GLMatrixFunc;
 import javax.media.opengl.glu.GLU;
-import javax.media.opengl.glu.GLUquadric;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -30,6 +29,7 @@ import net.sf.openrocket.database.ComponentPresetDatabase;
 import net.sf.openrocket.document.OpenRocketDocument;
 import net.sf.openrocket.file.GeneralRocketLoader;
 import net.sf.openrocket.gui.figure3d.geometry.FlameRenderer;
+import net.sf.openrocket.gui.figure3d.sky.SkyBox;
 import net.sf.openrocket.gui.main.Splash;
 import net.sf.openrocket.gui.util.BlockingMotorDatabaseProvider;
 import net.sf.openrocket.gui.util.GUIUtil;
@@ -51,7 +51,6 @@ import net.sf.openrocket.util.StateChangeListener;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Module;
-import com.jogamp.opengl.util.texture.Texture;
 
 public class PhotoBooth extends JPanel implements GLEventListener {
 	private static final long serialVersionUID = 1L;
@@ -70,15 +69,15 @@ public class PhotoBooth extends JPanel implements GLEventListener {
 	private double ratio;
 	
 	public static class Photo extends AbstractChangeSource {
-		private double roll = 0;
+		private double roll = 3.14;
 		private double yaw = 0;
-		private double pitch = Math.PI / 2.0;
-		private double viewAlt;
-		private double viewAz;
-		private double viewDistance = .5;
-		private double fov = Math.PI / 3.0;
-		private double lightAlt;
-		private double lightAz;
+		private double pitch = 2.05;
+		private double viewAlt = -0.23;
+		private double viewAz = 2.08;
+		private double viewDistance = .44;
+		private double fov = 1.4;
+		private double lightAlt = .35;
+		private double lightAz = -1;
 		
 		public double getRoll() {
 			return roll;
@@ -279,40 +278,6 @@ public class PhotoBooth extends JPanel implements GLEventListener {
 		glu.gluPerspective(p.getFov() * (180.0 / Math.PI), ratio, 0.1f, 50f);
 		gl.glMatrixMode(GLMatrixFunc.GL_MODELVIEW);
 		
-		gl.glLoadIdentity();
-		
-		//Draw the sky
-		gl.glPushMatrix();
-		gl.glBlendFunc(GL.GL_SRC_ALPHA, GL.GL_ONE_MINUS_SRC_ALPHA);
-		gl.glDisable(GLLightingFunc.GL_LIGHTING);
-		Texture sky = textureCache.getTexture(PhotoBooth.class.getResource("sky.png"));
-		sky.enable(gl);
-		sky.bind(gl);
-		gl.glColor3d(1, 1, 1);
-		GLUquadric q = glu.gluNewQuadric();
-		glu.gluQuadricTexture(q, true);
-		glu.gluQuadricOrientation(q, GLU.GLU_OUTSIDE);
-		
-		gl.glRotated(p.getViewAlt() * (180.0 / Math.PI), 1, 0, 0);
-		gl.glRotated(p.getViewAz() * (180.0 / Math.PI), 0, 1, 0);
-		
-		gl.glRotatef(90, 1, 0, 0);
-		gl.glTranslated(0, 0, 0);
-		gl.glDepthMask(false);
-		glu.gluSphere(q, 1f, 100, 100);
-		gl.glDepthMask(true);
-		sky.disable(gl);
-		gl.glEnable(GLLightingFunc.GL_LIGHTING);
-		gl.glPopMatrix();
-		
-		
-		glu.gluLookAt(0, 0, p.getViewDistance(), 0, 0, 0, 0, 1, 0);
-		
-		
-		//Change to LEFT Handed coordinates
-		gl.glScaled(1, 1, -1);
-		gl.glFrontFace(GL.GL_CW);
-		
 		//Flip textures for LEFT handed coords
 		gl.glMatrixMode(GL.GL_TEXTURE);
 		gl.glLoadIdentity();
@@ -320,8 +285,26 @@ public class PhotoBooth extends JPanel implements GLEventListener {
 		gl.glTranslated(-1, 0, 0);
 		gl.glMatrixMode(GLMatrixFunc.GL_MODELVIEW);
 		
-		gl.glRotated(-p.getViewAlt() * (180.0 / Math.PI), 1, 0, 0);
-		gl.glRotated(-p.getViewAz() * (180.0 / Math.PI), 0, 1, 0);
+		gl.glLoadIdentity();
+		
+		//Draw the sky
+		gl.glPushMatrix();
+		gl.glDisable(GLLightingFunc.GL_LIGHTING);
+		gl.glDepthMask(false);
+		gl.glRotated(p.getViewAlt() * (180.0 / Math.PI), 1, 0, 0);
+		gl.glRotated(p.getViewAz() * (180.0 / Math.PI), 0, 1, 0);
+		gl.glBlendFunc(GL.GL_SRC_ALPHA, GL.GL_ONE_MINUS_SRC_ALPHA);
+		SkyBox.draw(gl, textureCache);
+		//SkySphere.draw(gl, textureCache);
+		gl.glDepthMask(true);
+		gl.glEnable(GLLightingFunc.GL_LIGHTING);
+		gl.glPopMatrix();
+		
+		
+		
+		glu.gluLookAt(0, 0, p.getViewDistance(), 0, 0, 0, 0, 1, 0);
+		gl.glRotated(p.getViewAlt() * (180.0 / Math.PI), 1, 0, 0);
+		gl.glRotated(p.getViewAz() * (180.0 / Math.PI), 0, 1, 0);
 		
 		float[] lightPosition = new float[] {
 				(float) Math.cos(p.getLightAlt()) * (float) Math.sin(p.getLightAz()),//
@@ -332,9 +315,10 @@ public class PhotoBooth extends JPanel implements GLEventListener {
 		gl.glLightfv(GLLightingFunc.GL_LIGHT1, GLLightingFunc.GL_POSITION,
 				lightPosition, 0);
 		
+		//Change to LEFT Handed coordinates
+		gl.glScaled(1, 1, -1);
+		gl.glFrontFace(GL.GL_CW);
 		setupModel(gl);
-		
-		
 		
 		rr.render(drawable, configuration, new HashSet<RocketComponent>());
 		FlameRenderer.f(gl);
@@ -495,5 +479,10 @@ public class PhotoBooth extends JPanel implements GLEventListener {
 		PhotoBooth pb = new PhotoBooth(doc, doc.getDefaultConfiguration());
 		ff.setContentPane(pb);
 		ff.setVisible(true);
+		
+		while (true) {
+			Thread.sleep(30);
+			//pb.p.setViewAz(pb.p.getViewAz() + 0.01);
+		}
 	}
 }

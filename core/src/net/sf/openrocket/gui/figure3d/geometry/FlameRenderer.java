@@ -208,7 +208,7 @@ public final class FlameRenderer {
 		double z = .02;
 		double v = 0;
 		double r = 0;
-		for (int i = 0; i < 80; i++) {
+		for (int i = 0; i < 60; i++) {
 			if (z < 2) {
 				v = z * .1;
 				r = .1 * z + .005;
@@ -225,7 +225,7 @@ public final class FlameRenderer {
 				gl.glTranslated(Math.random() * v - v / 2, Math.random() * v - v / 2, z + Math.random() * v - v / 2);
 				gl.glRotated(Math.random(), 1, 0, 0);
 				gl.glRotated(Math.random(), 0, 1, 0);
-				glu.gluSphere(q, r, 10, 10);
+				glu.gluSphere(q, r, 8, 8);
 				gl.glPopMatrix();
 			}
 			z = z + r;
