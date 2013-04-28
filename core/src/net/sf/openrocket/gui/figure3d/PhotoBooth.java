@@ -2,8 +2,14 @@ package net.sf.openrocket.gui.figure3d;
 
 import java.awt.BorderLayout;
 import java.awt.SplashScreen;
+import java.awt.Toolkit;
+import java.awt.datatransfer.DataFlavor;
+import java.awt.datatransfer.Transferable;
+import java.awt.datatransfer.UnsupportedFlavorException;
 import java.awt.event.MouseEvent;
+import java.awt.image.BufferedImage;
 import java.io.File;
+import java.io.IOException;
 import java.util.Collection;
 import java.util.EventObject;
 import java.util.HashSet;
@@ -51,6 +57,7 @@ import net.sf.openrocket.util.StateChangeListener;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Module;
+import com.jogamp.opengl.util.awt.Screenshot;
 
 public class PhotoBooth extends JPanel implements GLEventListener {
 	private static final long serialVersionUID = 1L;
@@ -190,7 +197,6 @@ public class PhotoBooth extends JPanel implements GLEventListener {
 		});
 		
 		this.add(new PhotoConfigPanel(p), BorderLayout.EAST);
-		
 	}
 	
 	/**
@@ -323,6 +329,8 @@ public class PhotoBooth extends JPanel implements GLEventListener {
 		rr.render(drawable, configuration, new HashSet<RocketComponent>());
 		FlameRenderer.f(gl);
 		
+		copy(drawable);
+		
 	}
 	
 	@Override
@@ -445,6 +453,41 @@ public class PhotoBooth extends JPanel implements GLEventListener {
 	@Override
 	public void repaint() {
 		internalRepaint();
+	}
+	
+	private void copy(final GLAutoDrawable drawable) {
+		final BufferedImage image = Screenshot.readToBufferedImage(drawable.getWidth(), drawable.getHeight());
+		Toolkit.getDefaultToolkit().getSystemClipboard().setContents(new Transferable() {
+			@Override
+			public Object getTransferData(DataFlavor flavor)
+					throws UnsupportedFlavorException, IOException {
+				if (flavor.equals(DataFlavor.imageFlavor) && image != null) {
+					return image;
+				}
+				else {
+					throw new UnsupportedFlavorException(flavor);
+				}
+			}
+			
+			@Override
+			public DataFlavor[] getTransferDataFlavors() {
+				DataFlavor[] flavors = new DataFlavor[1];
+				flavors[0] = DataFlavor.imageFlavor;
+				return flavors;
+			}
+			
+			@Override
+			public boolean isDataFlavorSupported(DataFlavor flavor) {
+				DataFlavor[] flavors = getTransferDataFlavors();
+				for (int i = 0; i < flavors.length; i++) {
+					if (flavor.equals(flavors[i])) {
+						return true;
+					}
+				}
+				
+				return false;
+			}
+		}, null);
 	}
 	
 	public static void main(String args[]) throws Exception {
