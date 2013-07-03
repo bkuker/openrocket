@@ -329,7 +329,7 @@ public class PhotoBooth extends JPanel implements GLEventListener {
 		rr.render(drawable, configuration, new HashSet<RocketComponent>());
 		FlameRenderer.f(gl);
 		
-		copy(drawable);
+		//copy(drawable);
 		
 	}
 	
