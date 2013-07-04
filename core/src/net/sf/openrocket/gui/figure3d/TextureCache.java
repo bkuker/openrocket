@@ -10,15 +10,16 @@ import javax.media.opengl.GLAutoDrawable;
 import javax.media.opengl.GLProfile;
 
 import net.sf.openrocket.appearance.Decal;
-import net.sf.openrocket.logging.LogHelper;
-import net.sf.openrocket.startup.Application;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.jogamp.opengl.util.texture.Texture;
 import com.jogamp.opengl.util.texture.TextureData;
 import com.jogamp.opengl.util.texture.TextureIO;
 
 public class TextureCache {
-	private static final LogHelper log = Application.getLogger();
+	private static final Logger log = LoggerFactory.getLogger(TextureCache.class);
 	
 	private Map<String, Texture> oldTexCache = null;
 	private Map<String, Texture> texCache = null;

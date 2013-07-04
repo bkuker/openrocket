@@ -31,28 +31,28 @@ import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
 import javax.swing.event.MouseInputAdapter;
 
-import net.sf.openrocket.database.ComponentPresetDatabase;
+import net.sf.openrocket.communication.UpdateInfoRetriever;
+import net.sf.openrocket.database.Databases;
 import net.sf.openrocket.document.OpenRocketDocument;
 import net.sf.openrocket.file.GeneralRocketLoader;
 import net.sf.openrocket.gui.figure3d.geometry.FlameRenderer;
 import net.sf.openrocket.gui.figure3d.sky.SkyBox;
 import net.sf.openrocket.gui.main.Splash;
-import net.sf.openrocket.gui.util.BlockingMotorDatabaseProvider;
+import net.sf.openrocket.gui.main.SwingExceptionHandler;
 import net.sf.openrocket.gui.util.GUIUtil;
 import net.sf.openrocket.gui.util.SwingPreferences;
-import net.sf.openrocket.l10n.ResourceBundleTranslator;
-import net.sf.openrocket.logging.LogHelper;
 import net.sf.openrocket.plugin.PluginModule;
 import net.sf.openrocket.rocketcomponent.Configuration;
 import net.sf.openrocket.rocketcomponent.RocketComponent;
 import net.sf.openrocket.startup.Application;
-import net.sf.openrocket.startup.ApplicationModule;
-import net.sf.openrocket.startup.ApplicationModule2;
-import net.sf.openrocket.startup.MotorDatabaseLoader;
+import net.sf.openrocket.startup.GuiModule;
 import net.sf.openrocket.util.AbstractChangeSource;
 import net.sf.openrocket.util.Coordinate;
 import net.sf.openrocket.util.MathUtil;
 import net.sf.openrocket.util.StateChangeListener;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -61,7 +61,7 @@ import com.jogamp.opengl.util.awt.Screenshot;
 
 public class PhotoBooth extends JPanel implements GLEventListener {
 	private static final long serialVersionUID = 1L;
-	private static final LogHelper log = Application.getLogger();
+	private static final Logger log = LoggerFactory.getLogger(PhotoBooth.class);
 	
 	static {
 		//this allows the GL canvas and things like the motor selection
@@ -213,28 +213,28 @@ public class PhotoBooth extends JPanel implements GLEventListener {
 		try {
 			log.debug("Setting up GL capabilities...");
 			
-			log.verbose("GL - Getting Default Profile");
+			log.trace("GL - Getting Default Profile");
 			final GLProfile glp = GLProfile.get(GLProfile.GL2);
 			
-			log.verbose("GL - creating GLCapabilities");
+			log.trace("GL - creating GLCapabilities");
 			final GLCapabilities caps = new GLCapabilities(glp);
 			
-			log.verbose("GL - setSampleBuffers");
+			log.trace("GL - setSampleBuffers");
 			caps.setSampleBuffers(true);
 			
-			log.verbose("GL - setNumSamples");
+			log.trace("GL - setNumSamples");
 			caps.setNumSamples(6);
 			
-			log.verbose("GL - Creating Canvas");
+			log.trace("GL - Creating Canvas");
 			canvas = new GLCanvas(caps);
 			
-			log.verbose("GL - Registering as GLEventListener on canvas");
+			log.trace("GL - Registering as GLEventListener on canvas");
 			canvas.addGLEventListener(this);
 			
-			log.verbose("GL - Adding canvas to this JPanel");
+			log.trace("GL - Adding canvas to this JPanel");
 			this.add(canvas, BorderLayout.CENTER);
 			
-			log.verbose("GL - Setting up mouse listeners");
+			log.trace("GL - Setting up mouse listeners");
 			setupMouseListeners();
 			
 			
@@ -335,14 +335,14 @@ public class PhotoBooth extends JPanel implements GLEventListener {
 	
 	@Override
 	public void dispose(final GLAutoDrawable drawable) {
-		log.verbose("GL - dispose() called");
+		log.trace("GL - dispose() called");
 		rr.dispose(drawable);
 		textureCache.dispose(drawable);
 	}
 	
 	@Override
 	public void init(final GLAutoDrawable drawable) {
-		log.verbose("GL - init()");
+		log.trace("GL - init()");
 		
 		final GL2 gl = drawable.getGL().getGL2();
 		gl.glClearDepth(1.0f); // clear z-buffer to the farthest
@@ -371,7 +371,7 @@ public class PhotoBooth extends JPanel implements GLEventListener {
 	
 	@Override
 	public void reshape(final GLAutoDrawable drawable, final int x, final int y, final int w, final int h) {
-		log.verbose("GL - reshape()");
+		log.trace("GL - reshape()");
 		ratio = (double) w / (double) h;
 	}
 	
@@ -455,6 +455,7 @@ public class PhotoBooth extends JPanel implements GLEventListener {
 		internalRepaint();
 	}
 	
+	@SuppressWarnings("unused")
 	private void copy(final GLAutoDrawable drawable) {
 		final BufferedImage image = Screenshot.readToBufferedImage(drawable.getWidth(), drawable.getHeight());
 		Toolkit.getDefaultToolkit().getSystemClipboard().setContents(new Transferable() {
@@ -491,26 +492,42 @@ public class PhotoBooth extends JPanel implements GLEventListener {
 	}
 	
 	public static void main(String args[]) throws Exception {
-		GUIUtil.setBestLAF();
-		Application.setBaseTranslator(new ResourceBundleTranslator(
-				"l10n.messages"));
-		Application.setPreferences(new SwingPreferences());
-		Module applicationModule = new ApplicationModule();
+		// Setup the uncaught exception handler
+		log.info("Registering exception handler");
+		SwingExceptionHandler exceptionHandler = new SwingExceptionHandler();
+		Application.setExceptionHandler(exceptionHandler);
+		exceptionHandler.registerExceptionHandler();
+		
+		// Load motors etc.
+		log.info("Loading databases");
+		
+		GuiModule guiModule = new GuiModule();
 		Module pluginModule = new PluginModule();
-		Injector injector = Guice.createInjector(applicationModule, pluginModule);
+		Injector injector = Guice.createInjector(guiModule, pluginModule);
 		Application.setInjector(injector);
-		MotorDatabaseLoader bg = injector.getInstance(MotorDatabaseLoader.class);
-		bg.startLoading();
-		BlockingMotorDatabaseProvider db = new BlockingMotorDatabaseProvider(bg);
-		ApplicationModule2 module = new ApplicationModule2(db);
-		Injector injector2 = injector.createChildInjector(module);
-		Application.setInjector(injector2);
-		ComponentPresetDatabase componentPresetDao = new ComponentPresetDatabase() {
-			@Override
-			protected void load() {
-			}
-		};
-		Application.setComponentPresetDao(componentPresetDao);
+		
+		guiModule.startLoader();
+		
+		// Start update info fetching
+		final UpdateInfoRetriever updateInfo;
+		if (Application.getPreferences().getCheckUpdates()) {
+			log.info("Starting update check");
+			updateInfo = new UpdateInfoRetriever();
+			updateInfo.start();
+		} else {
+			log.info("Update check disabled");
+			updateInfo = null;
+		}
+		
+		// Set the best available look-and-feel
+		log.info("Setting best LAF");
+		GUIUtil.setBestLAF();
+		
+		// Load defaults
+		((SwingPreferences) Application.getPreferences()).loadDefaultUnits();
+		
+		Databases.fakeMethod();
+		
 		
 		GeneralRocketLoader grl = new GeneralRocketLoader(new File("C:\\Users\\bkuker\\git\\openrocket\\core\\resources\\datafiles\\examples\\A simple model rocket.ork"));
 		OpenRocketDocument doc = grl.load();
