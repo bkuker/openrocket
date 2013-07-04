@@ -24,6 +24,9 @@ import net.sf.openrocket.util.StateChangeListener;
 import net.sf.openrocket.util.Utils;
 import net.sf.openrocket.util.WorldCoordinate;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 /**
  * A class holding simulation options in basic parameter form and which functions
  * as a ChangeSource.  A SimulationConditions instance is generated from this class
@@ -32,6 +35,8 @@ import net.sf.openrocket.util.WorldCoordinate;
  * @author Sampo Niskanen <sampo.niskanen@iki.fi>
  */
 public class SimulationOptions implements ChangeSource, Cloneable {
+	
+	private static final Logger log = LoggerFactory.getLogger(SimulationOptions.class);
 	
 	public static final double MAX_LAUNCH_ROD_ANGLE = Math.PI / 3;
 	
@@ -447,6 +452,71 @@ public class SimulationOptions implements ChangeSource, Cloneable {
 		fireChangeEvent();
 	}
 	
+	public void copyConditionsFrom(SimulationOptions src) {
+		// Be a little smart about triggering the change event.
+		// only do it if one of the "important" (user specified) parameters has really changed.
+		boolean isChanged = false;
+		if (this.launchAltitude != src.launchAltitude) {
+			isChanged = true;
+			this.launchAltitude = src.launchAltitude;
+		}
+		if (this.launchLatitude != src.launchLatitude) {
+			isChanged = true;
+			this.launchLatitude = src.launchLatitude;
+		}
+		if (this.launchLongitude != src.launchLongitude) {
+			isChanged = true;
+			this.launchLongitude = src.launchLongitude;
+		}
+		if (this.launchPressure != src.launchPressure) {
+			isChanged = true;
+			this.launchPressure = src.launchPressure;
+		}
+		if (this.launchRodAngle != src.launchRodAngle) {
+			isChanged = true;
+			this.launchRodAngle = src.launchRodAngle;
+		}
+		if (this.launchRodDirection != src.launchRodDirection) {
+			isChanged = true;
+			this.launchRodDirection = src.launchRodDirection;
+		}
+		if (this.launchRodLength != src.launchRodLength) {
+			isChanged = true;
+			this.launchRodLength = src.launchRodLength;
+		}
+		if (this.launchTemperature != src.launchTemperature) {
+			isChanged = true;
+			this.launchTemperature = src.launchTemperature;
+		}
+		if (this.maximumAngle != src.maximumAngle) {
+			isChanged = true;
+			this.maximumAngle = src.maximumAngle;
+		}
+		this.maximumAngle = src.maximumAngle;
+		if (this.timeStep != src.timeStep) {
+			isChanged = true;
+			this.timeStep = src.timeStep;
+		}
+		if (this.windAverage != src.windAverage) {
+			isChanged = true;
+			this.windAverage = src.windAverage;
+		}
+		if (this.windTurbulence != src.windTurbulence) {
+			isChanged = true;
+			this.windTurbulence = src.windTurbulence;
+		}
+		if (this.calculateExtras != src.calculateExtras) {
+			isChanged = true;
+			this.calculateExtras = src.calculateExtras;
+		}
+		
+		if (isChanged) {
+			// Only copy the randomSeed if something else has changed.
+			// Honestly, I don't really see a need for that.
+			this.randomSeed = src.randomSeed;
+			fireChangeEvent();
+		}
+	}
 	
 	
 	/**

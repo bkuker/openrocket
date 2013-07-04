@@ -52,6 +52,8 @@ import net.sf.openrocket.util.StateChangeListener;
 public class AppearancePanel extends JPanel {
 	private static final Translator trans = Application.getTranslator();
 	
+	private EditDecalHelper editDecalHelper = Application.getInjector().getInstance(EditDecalHelper.class);
+	
 	private AppearanceBuilder ab;
 	
 	// We hang on to the user selected appearance when switching to default appearance.
@@ -257,6 +259,7 @@ public class AppearancePanel extends JPanel {
 			add(p, "span 3, growx, wrap");
 			final JButton editBtn = new JButton(trans.get("AppearanceCfg.but.edit"));
 			editBtn.setEnabled(ab.getImage() != null);
+			// Enable the editBtn only when the appearance builder has an Image assigned to it.
 			ab.addChangeListener(new StateChangeListener() {
 				@Override
 				public void stateChanged(EventObject e) {
@@ -268,14 +271,13 @@ public class AppearancePanel extends JPanel {
 				@Override
 				public void actionPerformed(ActionEvent e) {
 					try {
-						EditDecalHelper.editDecal(SwingUtilities.getWindowAncestor(AppearancePanel.this), document, c, ab.getImage());
+						editDecalHelper.editDecal(SwingUtilities.getWindowAncestor(AppearancePanel.this), document, c, ab.getImage());
 					} catch (EditDecalHelperException ex) {
 						JOptionPane.showMessageDialog(AppearancePanel.this, ex.getMessage(), "", JOptionPane.ERROR_MESSAGE);
 					}
 				}
 				
 			});
-			mDefault.addEnableComponent(editBtn, false);
 			p.add(editBtn);
 		}
 		

@@ -54,8 +54,8 @@ import net.sf.openrocket.gui.figureelements.CGCaret;
 import net.sf.openrocket.gui.figureelements.CPCaret;
 import net.sf.openrocket.gui.figureelements.Caret;
 import net.sf.openrocket.gui.figureelements.RocketInfo;
-import net.sf.openrocket.gui.main.SimulationWorker;
 import net.sf.openrocket.gui.main.componenttree.ComponentTreeModel;
+import net.sf.openrocket.gui.simulation.SimulationWorker;
 import net.sf.openrocket.gui.util.SwingPreferences;
 import net.sf.openrocket.l10n.Translator;
 import net.sf.openrocket.masscalc.BasicMassCalculator;
@@ -297,11 +297,12 @@ public class RocketPanel extends JPanel implements TreeSelectionListener, Change
 					go3D();
 				} else {
 					figure.setType(v.type);
+					updateExtras(); // when switching from side view to back view, need to clear CP & CG markers
 					go2D();
 				}
 			}
 		};
-		add(new JLabel("View Type:"), "spanx, split");
+		add(new JLabel(trans.get("RocketPanel.lbl.ViewType")), "spanx, split");
 		add(new JComboBox(cm));
 		
 		
@@ -367,8 +368,6 @@ public class RocketPanel extends JPanel implements TreeSelectionListener, Change
 		
 		addExtras();
 	}
-	
-	
 	
 	public RocketFigure getFigure() {
 		return figure;
