@@ -329,6 +329,11 @@ public class PhotoBooth extends JPanel implements GLEventListener {
 		gl.glFrontFace(GL.GL_CW);
 		setupModel(gl);
 		
+		
+		Bounds b = calculateBounds();
+		gl.glLightf(GLLightingFunc.GL_LIGHT2, GLLightingFunc.GL_QUADRATIC_ATTENUATION, 20f);
+		gl.glLightfv(GLLightingFunc.GL_LIGHT2, GLLightingFunc.GL_POSITION, new float[] { (float) (b.xMax + .1f), 0, 0, 1 }, 0);
+		
 		rr.render(drawable, configuration, new HashSet<RocketComponent>());
 		
 		
@@ -372,27 +377,20 @@ public class PhotoBooth extends JPanel implements GLEventListener {
 		log.trace("GL - init()");
 		
 		final GL2 gl = drawable.getGL().getGL2();
+		
 		gl.glClearDepth(1.0f); // clear z-buffer to the farthest
-		
 		gl.glDepthFunc(GL.GL_LESS); // the type of depth test to do
-		
-		float amb = 0.5f;
-		float dif = 1.0f;
-		gl.glLightfv(GLLightingFunc.GL_LIGHT1, GLLightingFunc.GL_AMBIENT,
-				new float[] { amb, amb, amb, 1 }, 0);
-		gl.glLightfv(GLLightingFunc.GL_LIGHT1, GLLightingFunc.GL_DIFFUSE,
-				new float[] { dif, dif, dif, 1 }, 0);
-		gl.glLightfv(GLLightingFunc.GL_LIGHT1, GLLightingFunc.GL_SPECULAR,
-				new float[] { dif, dif, dif, 1 }, 0);
-		
-		gl.glEnable(GLLightingFunc.GL_LIGHT1);
-		gl.glEnable(GLLightingFunc.GL_LIGHTING);
-		gl.glShadeModel(GLLightingFunc.GL_SMOOTH);
-		
-		gl.glEnable(GLLightingFunc.GL_NORMALIZE);
 		
 		rr.init(drawable);
 		textureCache.init(drawable);
+		
+		//gl.glDisable(GLLightingFunc.GL_LIGHT1);
+		
+		gl.glLightfv(GLLightingFunc.GL_LIGHT2, GLLightingFunc.GL_AMBIENT, new float[] { 0, 0, 0, 1 }, 0);
+		gl.glLightfv(GLLightingFunc.GL_LIGHT2, GLLightingFunc.GL_DIFFUSE, new float[] { 1, 0.8f, 0.5f, 1 }, 0);
+		gl.glLightfv(GLLightingFunc.GL_LIGHT2, GLLightingFunc.GL_SPECULAR, new float[] { 1, 0.8f, 0.5f, 1 }, 0);
+		
+		gl.glEnable(GLLightingFunc.GL_LIGHT2);
 		
 	}
 	
@@ -555,8 +553,8 @@ public class PhotoBooth extends JPanel implements GLEventListener {
 		
 		Databases.fakeMethod();
 		
-		//String f = "C:\\Users\\bkuker\\git\\openrocket\\core\\resources\\datafiles\\examples\\High Power Airstart.ork";
-		String f = "C:\\Users\\bkuker\\git\\openrocket\\core\\resources\\datafiles\\examples\\A simple model rocket.ork";
+		String f = "C:\\Users\\bkuker\\git\\openrocket\\core\\resources\\datafiles\\examples\\High Power Airstart.ork";
+		//String f = "C:\\Users\\bkuker\\git\\openrocket\\core\\resources\\datafiles\\examples\\A simple model rocket.ork";
 		//String f = "C:\\Users\\bkuker\\git\\openrocket\\core\\resources\\datafiles\\examples\\Clustered rocket design.ork";
 		GeneralRocketLoader grl = new GeneralRocketLoader(new File(f));
 		OpenRocketDocument doc = grl.load();
