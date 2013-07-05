@@ -275,6 +275,25 @@ public class PhotoBooth extends JPanel implements GLEventListener {
 	@Override
 	public void display(final GLAutoDrawable drawable) {
 		GL2 gl = drawable.getGL().getGL2();
+		
+		d(drawable, 0);
+		
+		float m = .6f;
+		int c = 10;
+		float d = .06f;
+		
+		gl.glAccum(GL2.GL_LOAD, m);
+		
+		for (int i = 1; i <= c; i++) {
+			d(drawable, d / c * i);
+			gl.glAccum(GL2.GL_ACCUM, (1.0f - m) / c);
+		}
+		
+		gl.glAccum(GL2.GL_RETURN, 1.0f);
+	}
+	
+	public void d(final GLAutoDrawable drawable, float dx) {
+		GL2 gl = drawable.getGL().getGL2();
 		GLU glu = new GLU();
 		
 		gl.glEnable(GL.GL_MULTISAMPLE);
@@ -329,6 +348,8 @@ public class PhotoBooth extends JPanel implements GLEventListener {
 		gl.glFrontFace(GL.GL_CW);
 		setupModel(gl);
 		
+		gl.glTranslated(dx, 0, 0);
+		
 		
 		Bounds b = calculateBounds();
 		gl.glLightf(GLLightingFunc.GL_LIGHT2, GLLightingFunc.GL_QUADRATIC_ATTENUATION, 20f);
@@ -350,7 +371,6 @@ public class PhotoBooth extends JPanel implements GLEventListener {
 			for (int i = 0; i < position.length; i++) {
 				gl.glPushMatrix();
 				gl.glTranslated(position[i].x + motor.getLength(), position[i].y, position[i].z);
-				System.out.println(motor.getAverageThrustEstimate());
 				double s = Math.max(.5, motor.getAverageThrustEstimate() / 50.0);
 				gl.glScaled(s, s, s);
 				FlameRenderer.f(gl);
