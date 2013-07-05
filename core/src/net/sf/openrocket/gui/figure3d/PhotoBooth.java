@@ -13,6 +13,7 @@ import java.io.IOException;
 import java.util.Collection;
 import java.util.EventObject;
 import java.util.HashSet;
+import java.util.Iterator;
 
 import javax.media.opengl.GL;
 import javax.media.opengl.GL2;
@@ -41,8 +42,10 @@ import net.sf.openrocket.gui.main.Splash;
 import net.sf.openrocket.gui.main.SwingExceptionHandler;
 import net.sf.openrocket.gui.util.GUIUtil;
 import net.sf.openrocket.gui.util.SwingPreferences;
+import net.sf.openrocket.motor.Motor;
 import net.sf.openrocket.plugin.PluginModule;
 import net.sf.openrocket.rocketcomponent.Configuration;
+import net.sf.openrocket.rocketcomponent.MotorMount;
 import net.sf.openrocket.rocketcomponent.RocketComponent;
 import net.sf.openrocket.startup.Application;
 import net.sf.openrocket.startup.GuiModule;
@@ -327,7 +330,31 @@ public class PhotoBooth extends JPanel implements GLEventListener {
 		setupModel(gl);
 		
 		rr.render(drawable, configuration, new HashSet<RocketComponent>());
-		FlameRenderer.f(gl);
+		
+		
+		String motorID = configuration.getFlightConfigurationID();
+		Iterator<MotorMount> iterator = configuration.motorIterator();
+		while (iterator.hasNext()) {
+			MotorMount mount = iterator.next();
+			Motor motor = mount.getMotorConfiguration().get(motorID).getMotor();
+			double length = motor.getLength();
+			
+			Coordinate[] position = ((RocketComponent) mount).toAbsolute(new Coordinate(((RocketComponent) mount)
+					.getLength() + mount.getMotorOverhang() - length));
+			
+			for (int i = 0; i < position.length; i++) {
+				gl.glPushMatrix();
+				gl.glTranslated(position[i].x + motor.getLength(), position[i].y, position[i].z);
+				System.out.println(motor.getAverageThrustEstimate());
+				double s = Math.max(.5, motor.getAverageThrustEstimate() / 50.0);
+				gl.glScaled(s, s, s);
+				FlameRenderer.f(gl);
+				gl.glPopMatrix();
+			}
+		}
+		
+		
+		
 		
 		//copy(drawable);
 		
@@ -528,8 +555,10 @@ public class PhotoBooth extends JPanel implements GLEventListener {
 		
 		Databases.fakeMethod();
 		
-		
-		GeneralRocketLoader grl = new GeneralRocketLoader(new File("C:\\Users\\bkuker\\git\\openrocket\\core\\resources\\datafiles\\examples\\A simple model rocket.ork"));
+		//String f = "C:\\Users\\bkuker\\git\\openrocket\\core\\resources\\datafiles\\examples\\High Power Airstart.ork";
+		String f = "C:\\Users\\bkuker\\git\\openrocket\\core\\resources\\datafiles\\examples\\A simple model rocket.ork";
+		//String f = "C:\\Users\\bkuker\\git\\openrocket\\core\\resources\\datafiles\\examples\\Clustered rocket design.ork";
+		GeneralRocketLoader grl = new GeneralRocketLoader(new File(f));
 		OpenRocketDocument doc = grl.load();
 		
 		JFrame ff = new JFrame();
