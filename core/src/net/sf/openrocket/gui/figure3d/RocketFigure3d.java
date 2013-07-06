@@ -266,25 +266,41 @@ public class RocketFigure3d extends JPanel implements GLEventListener {
 		
 		gl.glEnable(GL.GL_MULTISAMPLE);
 		
+		/*gl.glEnable(GL2ES1.GL_FOG);
+		gl.glFogfv(GL2ES1.GL_FOG_COLOR, new float[] { 1, 1, 1, 1 }, 0);
+		gl.glFogf(GL2ES1.GL_FOG_DENSITY, 0.2f);
+		gl.glHint(GL2ES1.GL_FOG_HINT, GL2ES1.GL_NICEST);*/
 		
-		gl.glClearColor(1, 1, 1, 1);
+		//gl.glColorMask(true, true, true, true);
+		gl.glClearColor(0, 0, 0, 1);
 		gl.glClear(GL.GL_COLOR_BUFFER_BIT | GL.GL_DEPTH_BUFFER_BIT);
 		
 		
-		setupView(gl, glu, .01f);
-		gl.glColor3f(1, 0, 0);
-		rr.render(drawable, configuration, selection);
-		gl.glAccum(GL2.GL_LOAD, 0.5f);
-		
-		
+		gl.glColorMask(true, false, false, true);
 		gl.glClearColor(1, 1, 1, 1);
 		gl.glClear(GL.GL_COLOR_BUFFER_BIT | GL.GL_DEPTH_BUFFER_BIT);
+		
 		
 		setupView(gl, glu, -.01f);
-		gl.glColor3f(0, 1, 1);
+		gl.glColor3f(0, 0, 0);
+		rr.render(drawable, configuration, selection);
+		gl.glAccum(GL2.GL_LOAD, 1);
+		
+		
+		gl.glColorMask(true, true, true, true);
+		gl.glClearColor(0, 0, 0, 1);
+		gl.glClear(GL.GL_COLOR_BUFFER_BIT | GL.GL_DEPTH_BUFFER_BIT);
+		
+		gl.glColorMask(false, true, true, true);
+		gl.glClearColor(1, 1, 1, 1);
+		gl.glClear(GL.GL_COLOR_BUFFER_BIT | GL.GL_DEPTH_BUFFER_BIT);
+		
+		setupView(gl, glu, .01f);
+		gl.glColor3f(0, 0, 0);
 		rr.render(drawable, configuration, selection);
 		
-		gl.glAccum(GL2.GL_ACCUM, 0.5f);
+		gl.glColorMask(true, true, true, true);
+		gl.glAccum(GL2.GL_ACCUM, 1);
 		gl.glAccum(GL2.GL_RETURN, 1);
 		
 		//drawExtras(gl, glu);
