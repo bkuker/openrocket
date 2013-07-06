@@ -1,10 +1,12 @@
 package net.sf.openrocket.gui.figure3d;
 
+import javax.swing.JCheckBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JSpinner;
 
 import net.miginfocom.swing.MigLayout;
+import net.sf.openrocket.gui.adaptors.BooleanModel;
 import net.sf.openrocket.gui.adaptors.DoubleModel;
 import net.sf.openrocket.gui.components.StyledLabel;
 import net.sf.openrocket.gui.components.StyledLabel.Style;
@@ -68,5 +70,15 @@ public class PhotoConfigPanel extends JPanel {
 		add(new JSpinner(lightAltModle.getSpinnerModel()), "w 40");
 		add(new UnitSelector(lightAltModle), "wrap");
 		
+		add(new StyledLabel("Effects", Style.BOLD), "wrap");
+		
+		add(new JLabel("Smoke"));
+		add(new JCheckBox(new BooleanModel(p, "Smoke")), "wrap");
+		
+		add(new JLabel("Fire"));
+		add(new JCheckBox(new BooleanModel(p, "Flame")), "wrap");
+		
+		add(new JLabel("Speed"));
+		add(new JCheckBox(new BooleanModel(p, "MotionBlurred")), "wrap");
 	}
 }

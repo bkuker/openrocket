@@ -88,6 +88,9 @@ public class PhotoBooth extends JPanel implements GLEventListener {
 		private double fov = 1.4;
 		private double lightAlt = .35;
 		private double lightAz = -1;
+		private boolean motionBlurred = false;
+		private boolean flame = false;
+		private boolean smoke = false;
 		
 		public double getRoll() {
 			return roll;
@@ -167,6 +170,33 @@ public class PhotoBooth extends JPanel implements GLEventListener {
 		
 		public void setLightAz(double lightAz) {
 			this.lightAz = lightAz;
+			fireChangeEvent();
+		}
+		
+		public boolean isMotionBlurred() {
+			return motionBlurred;
+		}
+		
+		public void setMotionBlurred(boolean motionBlurred) {
+			this.motionBlurred = motionBlurred;
+			fireChangeEvent();
+		}
+		
+		public boolean isFlame() {
+			return flame;
+		}
+		
+		public void setFlame(boolean flame) {
+			this.flame = flame;
+			fireChangeEvent();
+		}
+		
+		public boolean isSmoke() {
+			return smoke;
+		}
+		
+		public void setSmoke(boolean smoke) {
+			this.smoke = smoke;
 			fireChangeEvent();
 		}
 	}
@@ -278,18 +308,22 @@ public class PhotoBooth extends JPanel implements GLEventListener {
 		
 		d(drawable, 0);
 		
-		float m = .6f;
-		int c = 10;
-		float d = .06f;
-		
-		gl.glAccum(GL2.GL_LOAD, m);
-		
-		for (int i = 1; i <= c; i++) {
-			d(drawable, d / c * i);
-			gl.glAccum(GL2.GL_ACCUM, (1.0f - m) / c);
+		if (p.isMotionBlurred()) {
+			Bounds b = calculateBounds();
+			
+			float m = .6f;
+			int c = 10;
+			float d = (float) b.xSize / 25.0f;
+			
+			gl.glAccum(GL2.GL_LOAD, m);
+			
+			for (int i = 1; i <= c; i++) {
+				d(drawable, d / c * i);
+				gl.glAccum(GL2.GL_ACCUM, (1.0f - m) / c);
+			}
+			
+			gl.glAccum(GL2.GL_RETURN, 1.0f);
 		}
-		
-		gl.glAccum(GL2.GL_RETURN, 1.0f);
 	}
 	
 	public void d(final GLAutoDrawable drawable, float dx) {
@@ -351,9 +385,15 @@ public class PhotoBooth extends JPanel implements GLEventListener {
 		gl.glTranslated(dx, 0, 0);
 		
 		
-		Bounds b = calculateBounds();
-		gl.glLightf(GLLightingFunc.GL_LIGHT2, GLLightingFunc.GL_QUADRATIC_ATTENUATION, 20f);
-		gl.glLightfv(GLLightingFunc.GL_LIGHT2, GLLightingFunc.GL_POSITION, new float[] { (float) (b.xMax + .1f), 0, 0, 1 }, 0);
+		if (p.isFlame()) {
+			Bounds b = calculateBounds();
+			gl.glLightf(GLLightingFunc.GL_LIGHT2, GLLightingFunc.GL_QUADRATIC_ATTENUATION, 20f);
+			gl.glLightfv(GLLightingFunc.GL_LIGHT2, GLLightingFunc.GL_POSITION, new float[] { (float) (b.xMax + .1f), 0, 0, 1 }, 0);
+			gl.glEnable(GLLightingFunc.GL_LIGHT2);
+		} else {
+			gl.glDisable(GLLightingFunc.GL_LIGHT2);
+		}
+		
 		
 		rr.render(drawable, configuration, new HashSet<RocketComponent>());
 		
@@ -371,9 +411,9 @@ public class PhotoBooth extends JPanel implements GLEventListener {
 			for (int i = 0; i < position.length; i++) {
 				gl.glPushMatrix();
 				gl.glTranslated(position[i].x + motor.getLength(), position[i].y, position[i].z);
-				double s = Math.max(.5, motor.getAverageThrustEstimate() / 50.0);
+				double s = Math.max(.5, Math.sqrt(motor.getAverageThrustEstimate()) / 4.0);
 				gl.glScaled(s, s, s);
-				FlameRenderer.f(gl);
+				FlameRenderer.f(gl, p.isFlame(), p.isSmoke());
 				gl.glPopMatrix();
 			}
 		}
@@ -409,8 +449,6 @@ public class PhotoBooth extends JPanel implements GLEventListener {
 		gl.glLightfv(GLLightingFunc.GL_LIGHT2, GLLightingFunc.GL_AMBIENT, new float[] { 0, 0, 0, 1 }, 0);
 		gl.glLightfv(GLLightingFunc.GL_LIGHT2, GLLightingFunc.GL_DIFFUSE, new float[] { 1, 0.8f, 0.5f, 1 }, 0);
 		gl.glLightfv(GLLightingFunc.GL_LIGHT2, GLLightingFunc.GL_SPECULAR, new float[] { 1, 0.8f, 0.5f, 1 }, 0);
-		
-		gl.glEnable(GLLightingFunc.GL_LIGHT2);
 		
 	}
 	
@@ -573,9 +611,11 @@ public class PhotoBooth extends JPanel implements GLEventListener {
 		
 		Databases.fakeMethod();
 		
-		String f = "C:\\Users\\bkuker\\git\\openrocket\\core\\resources\\datafiles\\examples\\High Power Airstart.ork";
+		String f = "C:\\Users\\bkuker\\git\\openrocket\\core\\resources\\datafiles\\examples\\Simulation Listeners.ork";
+		//String f = "C:\\Users\\bkuker\\git\\openrocket\\core\\resources\\datafiles\\examples\\High Power Airstart.ork";
 		//String f = "C:\\Users\\bkuker\\git\\openrocket\\core\\resources\\datafiles\\examples\\A simple model rocket.ork";
 		//String f = "C:\\Users\\bkuker\\git\\openrocket\\core\\resources\\datafiles\\examples\\Clustered rocket design.ork";
+		//String f = "C:\\Users\\bkuker\\git\\openrocket\\core\\resources\\datafiles\\examples\\Boosted Dart.ork";
 		GeneralRocketLoader grl = new GeneralRocketLoader(new File(f));
 		OpenRocketDocument doc = grl.load();
 		
