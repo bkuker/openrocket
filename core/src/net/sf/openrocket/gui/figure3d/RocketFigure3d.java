@@ -29,7 +29,6 @@ import javax.media.opengl.glu.GLU;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
-import javax.swing.SwingUtilities;
 import javax.swing.event.MouseInputAdapter;
 
 import net.sf.openrocket.document.OpenRocketDocument;
@@ -267,41 +266,29 @@ public class RocketFigure3d extends JPanel implements GLEventListener {
 		
 		gl.glEnable(GL.GL_MULTISAMPLE);
 		
+		
 		gl.glClearColor(1, 1, 1, 1);
 		gl.glClear(GL.GL_COLOR_BUFFER_BIT | GL.GL_DEPTH_BUFFER_BIT);
 		
-		setupView(gl, glu);
 		
-		if (pickPoint != null) {
-			gl.glDisable(GLLightingFunc.GL_LIGHTING);
-			final RocketComponent picked = rr.pick(drawable, configuration,
-					pickPoint, pickEvent.isShiftDown() ? selection : null);
-			if (csl != null) {
-				final MouseEvent e = pickEvent;
-				SwingUtilities.invokeLater(new Runnable() {
-					@Override
-					public void run() {
-						if (picked == null) {
-							log.debug("unselecting");
-							csl.componentClicked(new RocketComponent[] {}, e);
-						} else {
-							csl.componentClicked(new RocketComponent[] { picked }, e);
-						}
-					}
-				});
-				
-			}
-			pickPoint = null;
-			
-			gl.glClearColor(1, 1, 1, 1);
-			gl.glClear(GL.GL_COLOR_BUFFER_BIT | GL.GL_DEPTH_BUFFER_BIT);
-			
-			gl.glEnable(GLLightingFunc.GL_LIGHTING);
-		}
+		setupView(gl, glu, .01f);
+		gl.glColor3f(1, 0, 0);
+		rr.render(drawable, configuration, selection);
+		gl.glAccum(GL2.GL_LOAD, 0.5f);
+		
+		
+		gl.glClearColor(1, 1, 1, 1);
+		gl.glClear(GL.GL_COLOR_BUFFER_BIT | GL.GL_DEPTH_BUFFER_BIT);
+		
+		setupView(gl, glu, -.01f);
+		gl.glColor3f(0, 1, 1);
 		rr.render(drawable, configuration, selection);
 		
-		drawExtras(gl, glu);
-		drawCarets(gl, glu);
+		gl.glAccum(GL2.GL_ACCUM, 0.5f);
+		gl.glAccum(GL2.GL_RETURN, 1);
+		
+		//drawExtras(gl, glu);
+		//drawCarets(gl, glu);
 	}
 	
 	
@@ -483,7 +470,7 @@ public class RocketFigure3d extends JPanel implements GLEventListener {
 		}
 	}
 	
-	private void setupView(final GL2 gl, final GLU glu) {
+	private void setupView(final GL2 gl, final GLU glu, float d) {
 		gl.glLoadIdentity();
 		
 		gl.glLightfv(GLLightingFunc.GL_LIGHT1, GLLightingFunc.GL_POSITION,
@@ -501,7 +488,7 @@ public class RocketFigure3d extends JPanel implements GLEventListener {
 				/ Math.tan(Math.toRadians(fovY / 2.0));
 		
 		// Move back the greater of the 2 distances
-		glu.gluLookAt(0, 0, Math.max(dX, dY), 0, 0, 0, 0, 1, 0);
+		glu.gluLookAt(d, 0, Math.max(dX, dY), d * .1f, 0, 0, 0, 1, 0);
 		
 		gl.glRotated(yaw * (180.0 / Math.PI), 0, 1, 0);
 		gl.glRotated(roll * (180.0 / Math.PI), 1, 0, 0);
@@ -663,7 +650,7 @@ public class RocketFigure3d extends JPanel implements GLEventListener {
 			newRR = new UnfinishedRenderer(document);
 			break;
 		default:
-			newRR = new FigureRenderer();
+			newRR = new StereoRenderer();
 		}
 		
 		if (!canvas.isRealized()) {
