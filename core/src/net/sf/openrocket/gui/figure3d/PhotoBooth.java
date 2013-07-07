@@ -1,11 +1,15 @@
 package net.sf.openrocket.gui.figure3d;
 
 import java.awt.BorderLayout;
+import java.awt.FileDialog;
 import java.awt.SplashScreen;
 import java.awt.Toolkit;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
 import java.awt.datatransfer.UnsupportedFlavorException;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.awt.image.BufferedImage;
 import java.io.File;
@@ -26,22 +30,33 @@ import javax.media.opengl.awt.GLCanvas;
 import javax.media.opengl.fixedfunc.GLLightingFunc;
 import javax.media.opengl.fixedfunc.GLMatrixFunc;
 import javax.media.opengl.glu.GLU;
+import javax.swing.AbstractAction;
+import javax.swing.Action;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
+import javax.swing.JMenu;
+import javax.swing.JMenuBar;
+import javax.swing.JMenuItem;
 import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
+import javax.swing.KeyStroke;
+import javax.swing.SwingUtilities;
 import javax.swing.event.MouseInputAdapter;
 
 import net.sf.openrocket.communication.UpdateInfoRetriever;
 import net.sf.openrocket.database.Databases;
 import net.sf.openrocket.document.OpenRocketDocument;
 import net.sf.openrocket.file.GeneralRocketLoader;
+import net.sf.openrocket.file.RocketLoadException;
 import net.sf.openrocket.gui.figure3d.geometry.FlameRenderer;
 import net.sf.openrocket.gui.figure3d.sky.SkyBox;
 import net.sf.openrocket.gui.main.Splash;
 import net.sf.openrocket.gui.main.SwingExceptionHandler;
 import net.sf.openrocket.gui.util.GUIUtil;
+import net.sf.openrocket.gui.util.Icons;
 import net.sf.openrocket.gui.util.SwingPreferences;
+import net.sf.openrocket.l10n.Translator;
+import net.sf.openrocket.logging.Markers;
 import net.sf.openrocket.motor.Motor;
 import net.sf.openrocket.plugin.PluginModule;
 import net.sf.openrocket.rocketcomponent.Configuration;
@@ -73,11 +88,13 @@ public class PhotoBooth extends JPanel implements GLEventListener {
 		JPopupMenu.setDefaultLightWeightPopupEnabled(false);
 	}
 	
-	
-	private final Configuration configuration;
+	private final int SHORTCUT_KEY = Toolkit.getDefaultToolkit().getMenuShortcutKeyMask();
+	private final Translator trans = Application.getTranslator();
+	private Configuration configuration;
 	private GLCanvas canvas;
 	private TextureCache textureCache = new TextureCache();
 	private double ratio;
+	private boolean doCopy = false;
 	
 	public static class Photo extends AbstractChangeSource {
 		private double roll = 3.14;
@@ -258,11 +275,22 @@ public class PhotoBooth extends JPanel implements GLEventListener {
 	RocketRenderer rr;
 	Photo p;
 	
+	public void setDoc(final OpenRocketDocument doc) {
+		canvas.invoke(true, new GLRunnable() {
+			@Override
+			public boolean run(GLAutoDrawable drawable) {
+				PhotoBooth.this.configuration = doc.getDefaultConfiguration();
+				cachedBounds = null;
+				rr = new RealisticRenderer(doc);
+				rr.init(drawable);
+				return false;
+			}
+		});
+	}
 	
-	public PhotoBooth(final OpenRocketDocument doc, final Configuration config) {
-		this.configuration = config;
+	public PhotoBooth(final OpenRocketDocument doc) {
+		
 		this.setLayout(new BorderLayout());
-		rr = new RealisticRenderer(doc);
 		
 		p = new Photo();
 		
@@ -284,6 +312,8 @@ public class PhotoBooth extends JPanel implements GLEventListener {
 		});
 		
 		this.add(new PhotoConfigPanel(p), BorderLayout.EAST);
+		
+		setDoc(doc);
 	}
 	
 	/**
@@ -378,6 +408,13 @@ public class PhotoBooth extends JPanel implements GLEventListener {
 			
 			gl.glAccum(GL2.GL_RETURN, 1.0f);
 		}
+		
+		
+		if (doCopy) {
+			copy(drawable);
+			doCopy = false;
+		}
+		
 	}
 	
 	protected static void convertColor(Color color, float[] out) {
@@ -442,6 +479,8 @@ public class PhotoBooth extends JPanel implements GLEventListener {
 		gl.glEnable(GLLightingFunc.GL_LIGHTING);
 		gl.glPopMatrix();
 		
+		if (rr == null)
+			return;
 		
 		
 		glu.gluLookAt(0, 0, p.getViewDistance(), 0, 0, 0, 0, 1, 0);
@@ -504,11 +543,6 @@ public class PhotoBooth extends JPanel implements GLEventListener {
 			}
 		}
 		
-		
-		
-		
-		//copy(drawable);
-		
 	}
 	
 	@Override
@@ -527,7 +561,7 @@ public class PhotoBooth extends JPanel implements GLEventListener {
 		gl.glClearDepth(1.0f); // clear z-buffer to the farthest
 		gl.glDepthFunc(GL.GL_LESS); // the type of depth test to do
 		
-		rr.init(drawable);
+		
 		textureCache.init(drawable);
 		
 		//gl.glDisable(GLLightingFunc.GL_LIGHT1);
@@ -622,7 +656,6 @@ public class PhotoBooth extends JPanel implements GLEventListener {
 		internalRepaint();
 	}
 	
-	@SuppressWarnings("unused")
 	private void copy(final GLAutoDrawable drawable) {
 		final BufferedImage image = Screenshot.readToBufferedImage(drawable.getWidth(), drawable.getHeight());
 		Toolkit.getDefaultToolkit().getSystemClipboard().setContents(new Transferable() {
@@ -656,6 +689,69 @@ public class PhotoBooth extends JPanel implements GLEventListener {
 				return false;
 			}
 		}, null);
+	}
+	
+	JMenuBar getMenu() {
+		JMenuBar menubar = new JMenuBar();
+		JMenu menu;
+		JMenuItem item;
+		
+		////  File
+		menu = new JMenu(trans.get("main.menu.file"));
+		menu.setMnemonic(KeyEvent.VK_F);
+		//// File-handling related tasks
+		menu.getAccessibleContext().setAccessibleDescription(trans.get("main.menu.file.desc"));
+		menubar.add(menu);
+		
+		item = new JMenuItem(trans.get("main.menu.file.open"), KeyEvent.VK_O);
+		item.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_O, SHORTCUT_KEY));
+		//// Open a rocket design
+		item.getAccessibleContext().setAccessibleDescription(trans.get("BasicFrame.item.Openrocketdesign"));
+		item.setIcon(Icons.FILE_OPEN);
+		item.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				log.info(Markers.USER_MARKER, "Open... selected");
+				
+				final FileDialog fd = new FileDialog((JFrame) SwingUtilities.getWindowAncestor(PhotoBooth.this), "Open...", FileDialog.LOAD);
+				fd.setVisible(true);
+				if (fd.getFile() != null) {
+					File file = new File(fd.getDirectory() + fd.getFile());
+					log.debug("Opening File " + file.getAbsolutePath());
+					GeneralRocketLoader grl = new GeneralRocketLoader(file);
+					try {
+						OpenRocketDocument doc = grl.load();
+						setDoc(doc);
+					} catch (RocketLoadException e1) {
+						e1.printStackTrace();
+					}
+				}
+			}
+		});
+		menu.add(item);
+		
+		////  Edit
+		menu = new JMenu(trans.get("main.menu.edit"));
+		menu.setMnemonic(KeyEvent.VK_E);
+		//// Rocket editing
+		menu.getAccessibleContext().setAccessibleDescription(trans.get("BasicFrame.menu.Rocketedt"));
+		menubar.add(menu);
+		
+		
+		Action action = new AbstractAction("Copy") {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				doCopy = true;
+				repaint();
+			}
+		};
+		item = new JMenuItem(action);
+		item.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_C, SHORTCUT_KEY));
+		item.setMnemonic(KeyEvent.VK_C);
+		item.getAccessibleContext().setAccessibleDescription("Copy image to clipboard");
+		menu.add(item);
+		
+		return menubar;
 	}
 	
 	public static void main(String args[]) throws Exception {
@@ -707,7 +803,8 @@ public class PhotoBooth extends JPanel implements GLEventListener {
 		ff.setSize(1024, 768);
 		ff.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		
-		PhotoBooth pb = new PhotoBooth(doc, doc.getDefaultConfiguration());
+		PhotoBooth pb = new PhotoBooth(doc);
+		ff.setJMenuBar(pb.getMenu());
 		ff.setContentPane(pb);
 		ff.setVisible(true);
 		
