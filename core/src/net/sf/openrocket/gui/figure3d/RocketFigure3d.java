@@ -504,7 +504,7 @@ public class RocketFigure3d extends JPanel implements GLEventListener {
 				/ Math.tan(Math.toRadians(fovY / 2.0));
 		
 		// Move back the greater of the 2 distances
-		glu.gluLookAt(d, 0, Math.max(dX, dY), d * .1f, 0, 0, 0, 1, 0);
+		glu.gluLookAt(d / 2, 0, Math.max(dX, dY), d * .2f, 0, 0, 0, 1, 0);
 		
 		gl.glRotated(yaw * (180.0 / Math.PI), 0, 1, 0);
 		gl.glRotated(roll * (180.0 / Math.PI), 1, 0, 0);
