@@ -50,6 +50,7 @@ import net.sf.openrocket.rocketcomponent.RocketComponent;
 import net.sf.openrocket.startup.Application;
 import net.sf.openrocket.startup.GuiModule;
 import net.sf.openrocket.util.AbstractChangeSource;
+import net.sf.openrocket.util.Color;
 import net.sf.openrocket.util.Coordinate;
 import net.sf.openrocket.util.MathUtil;
 import net.sf.openrocket.util.StateChangeListener;
@@ -88,6 +89,8 @@ public class PhotoBooth extends JPanel implements GLEventListener {
 		private double fov = 1.4;
 		private double lightAlt = .35;
 		private double lightAz = -1;
+		private Color sunlight = new Color(255, 255, 255);
+		private double ambiance = .3f;
 		private boolean motionBlurred = false;
 		private boolean flame = false;
 		private boolean smoke = false;
@@ -197,6 +200,24 @@ public class PhotoBooth extends JPanel implements GLEventListener {
 		
 		public void setSmoke(boolean smoke) {
 			this.smoke = smoke;
+			fireChangeEvent();
+		}
+		
+		public Color getSunlight() {
+			return sunlight;
+		}
+		
+		public void setSunlight(Color sunlight) {
+			this.sunlight = sunlight;
+			fireChangeEvent();
+		}
+		
+		public double getAmbiance() {
+			return ambiance;
+		}
+		
+		public void setAmbiance(double ambiance) {
+			this.ambiance = ambiance;
 			fireChangeEvent();
 		}
 	}
@@ -326,11 +347,37 @@ public class PhotoBooth extends JPanel implements GLEventListener {
 		}
 	}
 	
+	protected static void convertColor(Color color, float[] out) {
+		if (color == null) {
+			out[0] = 1;
+			out[1] = 1;
+			out[2] = 0;
+		} else {
+			out[0] = (float) color.getRed() / 255f;
+			out[1] = (float) color.getGreen() / 255f;
+			out[2] = (float) color.getBlue() / 255f;
+		}
+	}
+	
 	public void d(final GLAutoDrawable drawable, float dx) {
 		GL2 gl = drawable.getGL().getGL2();
 		GLU glu = new GLU();
 		
+		float[] color = new float[3];
+		
 		gl.glEnable(GL.GL_MULTISAMPLE);
+		
+		
+		
+		convertColor(p.getSunlight(), color);
+		float amb = (float) p.getAmbiance();
+		float dif = 1.0f - amb;
+		float spc = 1.0f;
+		gl.glLightfv(GLLightingFunc.GL_LIGHT1, GLLightingFunc.GL_AMBIENT, new float[] { amb * color[0], amb * color[1], amb * color[2], 1 }, 0);
+		gl.glLightfv(GLLightingFunc.GL_LIGHT1, GLLightingFunc.GL_DIFFUSE, new float[] { dif * color[0], dif * color[1], dif * color[2], 1 }, 0);
+		gl.glLightfv(GLLightingFunc.GL_LIGHT1, GLLightingFunc.GL_SPECULAR, new float[] { spc * color[0], spc * color[1], spc * color[2], 1 }, 0);
+		
+		
 		
 		gl.glClearColor(1, 1, 1, 1);
 		gl.glClear(GL.GL_COLOR_BUFFER_BIT | GL.GL_DEPTH_BUFFER_BIT);
@@ -611,9 +658,9 @@ public class PhotoBooth extends JPanel implements GLEventListener {
 		
 		Databases.fakeMethod();
 		
-		String f = "C:\\Users\\bkuker\\git\\openrocket\\core\\resources\\datafiles\\examples\\Simulation Listeners.ork";
+		//String f = "C:\\Users\\bkuker\\git\\openrocket\\core\\resources\\datafiles\\examples\\Simulation Listeners.ork";
 		//String f = "C:\\Users\\bkuker\\git\\openrocket\\core\\resources\\datafiles\\examples\\High Power Airstart.ork";
-		//String f = "C:\\Users\\bkuker\\git\\openrocket\\core\\resources\\datafiles\\examples\\A simple model rocket.ork";
+		String f = "C:\\Users\\bkuker\\git\\openrocket\\core\\resources\\datafiles\\examples\\A simple model rocket.ork";
 		//String f = "C:\\Users\\bkuker\\git\\openrocket\\core\\resources\\datafiles\\examples\\Clustered rocket design.ork";
 		//String f = "C:\\Users\\bkuker\\git\\openrocket\\core\\resources\\datafiles\\examples\\Boosted Dart.ork";
 		GeneralRocketLoader grl = new GeneralRocketLoader(new File(f));

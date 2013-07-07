@@ -1,6 +1,15 @@
 package net.sf.openrocket.gui.figure3d;
 
+import java.awt.Color;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.lang.reflect.Method;
+import java.util.EventObject;
+
+import javax.swing.JButton;
 import javax.swing.JCheckBox;
+import javax.swing.JColorChooser;
+import javax.swing.JDialog;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JSpinner;
@@ -8,13 +17,55 @@ import javax.swing.JSpinner;
 import net.miginfocom.swing.MigLayout;
 import net.sf.openrocket.gui.adaptors.BooleanModel;
 import net.sf.openrocket.gui.adaptors.DoubleModel;
+import net.sf.openrocket.gui.components.ColorIcon;
 import net.sf.openrocket.gui.components.StyledLabel;
 import net.sf.openrocket.gui.components.StyledLabel.Style;
 import net.sf.openrocket.gui.components.UnitSelector;
+import net.sf.openrocket.gui.util.ColorConversion;
+import net.sf.openrocket.startup.Application;
 import net.sf.openrocket.unit.UnitGroup;
+import net.sf.openrocket.util.StateChangeListener;
 
 public class PhotoConfigPanel extends JPanel {
+	private static final JColorChooser colorChooser = new JColorChooser();
 	
+	private class ColorActionListener implements ActionListener {
+		private final String valueName;
+		private final Object o;
+		
+		ColorActionListener(final Object o, final String valueName) {
+			this.valueName = valueName;
+			this.o = o;
+		}
+		
+		@Override
+		public void actionPerformed(ActionEvent colorClickEvent) {
+			try {
+				final Method getMethod = o.getClass().getMethod("get" + valueName);
+				final Method setMethod = o.getClass().getMethod("set" + valueName, net.sf.openrocket.util.Color.class);
+				net.sf.openrocket.util.Color c = (net.sf.openrocket.util.Color) getMethod.invoke(o);
+				Color awtColor = ColorConversion.toAwtColor(c);
+				colorChooser.setColor(awtColor);
+				JDialog d = JColorChooser.createDialog(PhotoConfigPanel.this,
+						"Color Chooser", true, colorChooser, new ActionListener() {
+							@Override
+							public void actionPerformed(ActionEvent okEvent) {
+								Color selected = colorChooser.getColor();
+								if (selected == null)
+									return;
+								try {
+									setMethod.invoke(o, ColorConversion.fromAwtColor(selected));
+								} catch (Throwable e1) {
+									Application.getExceptionHandler().handleErrorCondition(e1);
+								}
+							}
+						}, null);
+				d.setVisible(true);
+			} catch (Throwable e1) {
+				Application.getExceptionHandler().handleErrorCondition(e1);
+			}
+		}
+	}
 	
 	public PhotoConfigPanel(final PhotoBooth.Photo p) {
 		super(new MigLayout("fill"));
@@ -59,6 +110,27 @@ public class PhotoConfigPanel extends JPanel {
 		add(new UnitSelector(fovModel), "wrap");
 		
 		add(new StyledLabel("Light", Style.BOLD), "wrap");
+		
+		
+		
+		
+		
+		final JButton sunLightColorButton = new JButton(new ColorIcon(p.getSunlight()));
+		p.addChangeListener(new StateChangeListener() {
+			@Override
+			public void stateChanged(EventObject e) {
+				sunLightColorButton.setIcon(new ColorIcon(p.getSunlight()));
+			}
+		});
+		sunLightColorButton.addActionListener(new ColorActionListener(p, "Sunlight"));
+		add(new JLabel("Sun Light"));
+		add(sunLightColorButton, "wrap");
+		
+		add(new JLabel("Ambiance"));
+		DoubleModel ambianceModel = new DoubleModel(p, "Ambiance", 100, UnitGroup.UNITS_NONE, 0, 100);
+		add(new JSpinner(ambianceModel.getSpinnerModel()), "wrap");
+		
+		
 		
 		add(new JLabel("Light Azimuth"));
 		DoubleModel lightAzModel = new DoubleModel(p, "LightAz", UnitGroup.UNITS_ANGLE);
