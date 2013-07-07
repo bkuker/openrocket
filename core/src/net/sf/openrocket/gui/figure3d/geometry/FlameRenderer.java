@@ -121,6 +121,8 @@ import javax.media.opengl.fixedfunc.GLLightingFunc;
 import javax.media.opengl.glu.GLU;
 import javax.media.opengl.glu.GLUquadric;
 
+import net.sf.openrocket.util.Color;
+
 import com.jogamp.opengl.util.texture.Texture;
 import com.jogamp.opengl.util.texture.TextureData;
 import com.jogamp.opengl.util.texture.TextureIO;
@@ -138,7 +140,19 @@ public final class FlameRenderer {
 	
 	static Texture noise;
 	
-	public static void f(GL2 gl, boolean flame, boolean smoke) {
+	protected static void convertColor(Color color, float[] out) {
+		if (color == null) {
+			out[0] = 1;
+			out[1] = 1;
+			out[2] = 0;
+		} else {
+			out[0] = (float) color.getRed() / 255f;
+			out[1] = (float) color.getGreen() / 255f;
+			out[2] = (float) color.getBlue() / 255f;
+		}
+	}
+	
+	public static void f(GL2 gl, boolean flame, boolean smoke, Color smokeColor, Color flameColor) {
 		
 		if (noise == null) {
 			try {
@@ -175,6 +189,8 @@ public final class FlameRenderer {
 			}, 80, 80);
 			
 			gl.glScaled(1.4, 1.4, 1.2);
+			final float[] fc = new float[3];
+			convertColor(flameColor, fc);
 			drawFlame(gl, 1, new Radius() {
 				@Override
 				public double getRadius(double z) {
@@ -184,9 +200,9 @@ public final class FlameRenderer {
 				
 				@Override
 				public void getColor(double z, float[] color) {
-					color[0] = 1;
-					color[1] = .4f;
-					color[2] = .2f;
+					color[0] = fc[0];
+					color[1] = fc[1];
+					color[2] = fc[2];
 					color[3] = (1 - (float) (z));
 				}
 			}, 80, 80);
@@ -198,7 +214,11 @@ public final class FlameRenderer {
 			GLU glu = new GLU();
 			GLUquadric q = glu.gluNewQuadric();
 			glu.gluQuadricTexture(q, true);
-			float[] color = { .9f, .9f, .9f, .4f };
+			
+			float[] color = new float[4];
+			convertColor(smokeColor, color);
+			color[3] = 0.4f;
+			
 			gl.glColor4fv(color, 0);
 			noise.enable(gl);
 			noise.bind(gl);

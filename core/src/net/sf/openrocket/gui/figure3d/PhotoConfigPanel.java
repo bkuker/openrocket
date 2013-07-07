@@ -1,6 +1,7 @@
 package net.sf.openrocket.gui.figure3d;
 
 import java.awt.Color;
+import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.lang.reflect.Method;
@@ -70,6 +71,30 @@ public class PhotoConfigPanel extends JPanel {
 	public PhotoConfigPanel(final PhotoBooth.Photo p) {
 		super(new MigLayout("fill"));
 		
+		final JButton sunLightColorButton = new JButton();
+		sunLightColorButton.setMaximumSize(new Dimension(35, 25));
+		final JButton smokeColorButton = new JButton();
+		smokeColorButton.setMaximumSize(new Dimension(35, 25));
+		final JButton flameColorButton = new JButton();
+		flameColorButton.setMaximumSize(new Dimension(35, 25));
+		
+		p.addChangeListener(new StateChangeListener() {
+			{
+				stateChanged(null);
+			}
+			
+			@Override
+			public void stateChanged(EventObject e) {
+				sunLightColorButton.setIcon(new ColorIcon(p.getSunlight()));
+				smokeColorButton.setIcon(new ColorIcon(p.getSmokeColor()));
+				flameColorButton.setIcon(new ColorIcon(p.getFlameColor()));
+			}
+		});
+		sunLightColorButton.addActionListener(new ColorActionListener(p, "Sunlight"));
+		smokeColorButton.addActionListener(new ColorActionListener(p, "SmokeColor"));
+		flameColorButton.addActionListener(new ColorActionListener(p, "FlameColor"));
+		
+		
 		add(new StyledLabel("Rocket", Style.BOLD), "wrap");
 		
 		add(new JLabel("Pitch"));
@@ -86,6 +111,13 @@ public class PhotoConfigPanel extends JPanel {
 		DoubleModel rollModel = new DoubleModel(p, "Roll", UnitGroup.UNITS_ANGLE);
 		add(new JSpinner(rollModel.getSpinnerModel()), "w 40");
 		add(new UnitSelector(rollModel), "wrap");
+		
+		add(new JLabel("Advance"));
+		DoubleModel advanceModel = new DoubleModel(p, "Advance", UnitGroup.UNITS_LENGTH);
+		add(new JSpinner(advanceModel.getSpinnerModel()), "w 40");
+		add(new UnitSelector(advanceModel), "wrap");
+		
+		
 		
 		add(new StyledLabel("Camera", Style.BOLD), "wrap");
 		
@@ -111,26 +143,12 @@ public class PhotoConfigPanel extends JPanel {
 		
 		add(new StyledLabel("Light", Style.BOLD), "wrap");
 		
-		
-		
-		
-		
-		final JButton sunLightColorButton = new JButton(new ColorIcon(p.getSunlight()));
-		p.addChangeListener(new StateChangeListener() {
-			@Override
-			public void stateChanged(EventObject e) {
-				sunLightColorButton.setIcon(new ColorIcon(p.getSunlight()));
-			}
-		});
-		sunLightColorButton.addActionListener(new ColorActionListener(p, "Sunlight"));
 		add(new JLabel("Sun Light"));
 		add(sunLightColorButton, "wrap");
 		
 		add(new JLabel("Ambiance"));
 		DoubleModel ambianceModel = new DoubleModel(p, "Ambiance", 100, UnitGroup.UNITS_NONE, 0, 100);
 		add(new JSpinner(ambianceModel.getSpinnerModel()), "wrap");
-		
-		
 		
 		add(new JLabel("Light Azimuth"));
 		DoubleModel lightAzModel = new DoubleModel(p, "LightAz", UnitGroup.UNITS_ANGLE);
@@ -145,10 +163,12 @@ public class PhotoConfigPanel extends JPanel {
 		add(new StyledLabel("Effects", Style.BOLD), "wrap");
 		
 		add(new JLabel("Smoke"));
-		add(new JCheckBox(new BooleanModel(p, "Smoke")), "wrap");
+		add(new JCheckBox(new BooleanModel(p, "Smoke")), "split 2, w 15");
+		add(smokeColorButton, "wrap");
 		
 		add(new JLabel("Fire"));
-		add(new JCheckBox(new BooleanModel(p, "Flame")), "wrap");
+		add(new JCheckBox(new BooleanModel(p, "Flame")), "split 2, w 15");
+		add(flameColorButton, "wrap");
 		
 		add(new JLabel("Speed"));
 		add(new JCheckBox(new BooleanModel(p, "MotionBlurred")), "wrap");

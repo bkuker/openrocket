@@ -83,17 +83,23 @@ public class PhotoBooth extends JPanel implements GLEventListener {
 		private double roll = 3.14;
 		private double yaw = 0;
 		private double pitch = 2.05;
+		private double advance = 0;
+		
 		private double viewAlt = -0.23;
 		private double viewAz = 2.08;
 		private double viewDistance = .44;
 		private double fov = 1.4;
+		
 		private double lightAlt = .35;
 		private double lightAz = -1;
 		private Color sunlight = new Color(255, 255, 255);
 		private double ambiance = .3f;
+		
 		private boolean motionBlurred = false;
 		private boolean flame = false;
+		private Color flameColor = new Color(255, 100, 50);
 		private boolean smoke = false;
+		private Color smokeColor = new Color(230, 230, 230);
 		
 		public double getRoll() {
 			return roll;
@@ -119,6 +125,15 @@ public class PhotoBooth extends JPanel implements GLEventListener {
 		
 		public void setPitch(double pitch) {
 			this.pitch = pitch;
+			fireChangeEvent();
+		}
+		
+		public double getAdvance() {
+			return advance;
+		}
+		
+		public void setAdvance(double advance) {
+			this.advance = advance;
 			fireChangeEvent();
 		}
 		
@@ -218,6 +233,24 @@ public class PhotoBooth extends JPanel implements GLEventListener {
 		
 		public void setAmbiance(double ambiance) {
 			this.ambiance = ambiance;
+			fireChangeEvent();
+		}
+		
+		public Color getFlameColor() {
+			return flameColor;
+		}
+		
+		public void setFlameColor(Color flameColor) {
+			this.flameColor = flameColor;
+			fireChangeEvent();
+		}
+		
+		public Color getSmokeColor() {
+			return smokeColor;
+		}
+		
+		public void setSmokeColor(Color smokeColor) {
+			this.smokeColor = smokeColor;
 			fireChangeEvent();
 		}
 	}
@@ -429,10 +462,16 @@ public class PhotoBooth extends JPanel implements GLEventListener {
 		gl.glFrontFace(GL.GL_CW);
 		setupModel(gl);
 		
-		gl.glTranslated(dx, 0, 0);
+		gl.glTranslated(dx - p.getAdvance(), 0, 0);
 		
 		
 		if (p.isFlame()) {
+			convertColor(p.getFlameColor(), color);
+			
+			gl.glLightfv(GLLightingFunc.GL_LIGHT2, GLLightingFunc.GL_AMBIENT, new float[] { 0, 0, 0, 1 }, 0);
+			gl.glLightfv(GLLightingFunc.GL_LIGHT2, GLLightingFunc.GL_DIFFUSE, new float[] { color[0], color[1], color[2], 1 }, 0);
+			gl.glLightfv(GLLightingFunc.GL_LIGHT2, GLLightingFunc.GL_SPECULAR, new float[] { color[0], color[1], color[2], 1 }, 0);
+			
 			Bounds b = calculateBounds();
 			gl.glLightf(GLLightingFunc.GL_LIGHT2, GLLightingFunc.GL_QUADRATIC_ATTENUATION, 20f);
 			gl.glLightfv(GLLightingFunc.GL_LIGHT2, GLLightingFunc.GL_POSITION, new float[] { (float) (b.xMax + .1f), 0, 0, 1 }, 0);
@@ -460,7 +499,7 @@ public class PhotoBooth extends JPanel implements GLEventListener {
 				gl.glTranslated(position[i].x + motor.getLength(), position[i].y, position[i].z);
 				double s = Math.max(.5, Math.sqrt(motor.getAverageThrustEstimate()) / 4.0);
 				gl.glScaled(s, s, s);
-				FlameRenderer.f(gl, p.isFlame(), p.isSmoke());
+				FlameRenderer.f(gl, p.isFlame(), p.isSmoke(), p.getSmokeColor(), p.getFlameColor());
 				gl.glPopMatrix();
 			}
 		}
@@ -493,9 +532,7 @@ public class PhotoBooth extends JPanel implements GLEventListener {
 		
 		//gl.glDisable(GLLightingFunc.GL_LIGHT1);
 		
-		gl.glLightfv(GLLightingFunc.GL_LIGHT2, GLLightingFunc.GL_AMBIENT, new float[] { 0, 0, 0, 1 }, 0);
-		gl.glLightfv(GLLightingFunc.GL_LIGHT2, GLLightingFunc.GL_DIFFUSE, new float[] { 1, 0.8f, 0.5f, 1 }, 0);
-		gl.glLightfv(GLLightingFunc.GL_LIGHT2, GLLightingFunc.GL_SPECULAR, new float[] { 1, 0.8f, 0.5f, 1 }, 0);
+		
 		
 	}
 	
