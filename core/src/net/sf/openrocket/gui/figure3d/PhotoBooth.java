@@ -112,6 +112,10 @@ public class PhotoBooth extends JPanel implements GLEventListener {
 		private Color sunlight = new Color(255, 255, 255);
 		private double ambiance = .3f;
 		
+		private boolean skyEnabled = true;
+		private Color skyColor = new Color(55, 95, 155);
+		
+		
 		private boolean motionBlurred = false;
 		private boolean flame = false;
 		private Color flameColor = new Color(255, 100, 50);
@@ -250,6 +254,24 @@ public class PhotoBooth extends JPanel implements GLEventListener {
 		
 		public void setAmbiance(double ambiance) {
 			this.ambiance = ambiance;
+			fireChangeEvent();
+		}
+		
+		public boolean isSkyEnabled() {
+			return skyEnabled;
+		}
+		
+		public void setSkyEnabled(boolean skyEnabled) {
+			this.skyEnabled = skyEnabled;
+			fireChangeEvent();
+		}
+		
+		public Color getSkyColor() {
+			return skyColor;
+		}
+		
+		public void setSkyColor(Color skyColor) {
+			this.skyColor = skyColor;
 			fireChangeEvent();
 		}
 		
@@ -448,8 +470,8 @@ public class PhotoBooth extends JPanel implements GLEventListener {
 		gl.glLightfv(GLLightingFunc.GL_LIGHT1, GLLightingFunc.GL_SPECULAR, new float[] { spc * color[0], spc * color[1], spc * color[2], 1 }, 0);
 		
 		
-		
-		gl.glClearColor(1, 1, 1, 1);
+		convertColor(p.getSkyColor(), color);
+		gl.glClearColor(color[0], color[1], color[2], 1);
 		gl.glClear(GL.GL_COLOR_BUFFER_BIT | GL.GL_DEPTH_BUFFER_BIT);
 		
 		gl.glMatrixMode(GLMatrixFunc.GL_PROJECTION);
@@ -473,7 +495,9 @@ public class PhotoBooth extends JPanel implements GLEventListener {
 		gl.glRotated(p.getViewAlt() * (180.0 / Math.PI), 1, 0, 0);
 		gl.glRotated(p.getViewAz() * (180.0 / Math.PI), 0, 1, 0);
 		gl.glBlendFunc(GL.GL_SRC_ALPHA, GL.GL_ONE_MINUS_SRC_ALPHA);
-		SkyBox.draw(gl, textureCache);
+		if (p.isSkyEnabled()) {
+			SkyBox.draw(gl, textureCache);
+		}
 		//SkySphere.draw(gl, textureCache);
 		gl.glDepthMask(true);
 		gl.glEnable(GLLightingFunc.GL_LIGHTING);
@@ -548,7 +572,8 @@ public class PhotoBooth extends JPanel implements GLEventListener {
 	@Override
 	public void dispose(final GLAutoDrawable drawable) {
 		log.trace("GL - dispose() called");
-		rr.dispose(drawable);
+		if (rr != null)
+			rr.dispose(drawable);
 		textureCache.dispose(drawable);
 	}
 	

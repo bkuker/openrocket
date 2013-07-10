@@ -73,8 +73,13 @@ public class PhotoConfigPanel extends JPanel {
 		
 		final JButton sunLightColorButton = new JButton();
 		sunLightColorButton.setMaximumSize(new Dimension(35, 25));
+		
+		final JButton skyColorButton = new JButton();
+		skyColorButton.setMaximumSize(new Dimension(35, 25));
+		
 		final JButton smokeColorButton = new JButton();
 		smokeColorButton.setMaximumSize(new Dimension(35, 25));
+		
 		final JButton flameColorButton = new JButton();
 		flameColorButton.setMaximumSize(new Dimension(35, 25));
 		
@@ -86,11 +91,13 @@ public class PhotoConfigPanel extends JPanel {
 			@Override
 			public void stateChanged(EventObject e) {
 				sunLightColorButton.setIcon(new ColorIcon(p.getSunlight()));
+				skyColorButton.setIcon(new ColorIcon(p.getSkyColor()));
 				smokeColorButton.setIcon(new ColorIcon(p.getSmokeColor()));
 				flameColorButton.setIcon(new ColorIcon(p.getFlameColor()));
 			}
 		});
 		sunLightColorButton.addActionListener(new ColorActionListener(p, "Sunlight"));
+		skyColorButton.addActionListener(new ColorActionListener(p, "SkyColor"));
 		smokeColorButton.addActionListener(new ColorActionListener(p, "SmokeColor"));
 		flameColorButton.addActionListener(new ColorActionListener(p, "FlameColor"));
 		
@@ -159,6 +166,14 @@ public class PhotoConfigPanel extends JPanel {
 		DoubleModel lightAltModle = new DoubleModel(p, "LightAlt", UnitGroup.UNITS_ANGLE);
 		add(new JSpinner(lightAltModle.getSpinnerModel()), "w 40");
 		add(new UnitSelector(lightAltModle), "wrap");
+		
+		add(new StyledLabel("Sky", Style.BOLD), "wrap");
+		
+		add(new JLabel("Sky Color"));
+		add(skyColorButton, "wrap");
+		
+		add(new JLabel("Sky Image"));
+		add(new JCheckBox(new BooleanModel(p, "SkyEnabled")), "wrap");
 		
 		add(new StyledLabel("Effects", Style.BOLD), "wrap");
 		
