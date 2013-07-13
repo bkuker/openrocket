@@ -116,6 +116,7 @@ package net.sf.openrocket.gui.figure3d.geometry;
 
 import javax.media.opengl.GL;
 import javax.media.opengl.GL2;
+import javax.media.opengl.GL2ES1;
 import javax.media.opengl.GLProfile;
 import javax.media.opengl.fixedfunc.GLLightingFunc;
 import javax.media.opengl.glu.GLU;
@@ -152,7 +153,136 @@ public final class FlameRenderer {
 		}
 	}
 	
+	static Texture smokeT;
+	
 	public static void f(GL2 gl, boolean flame, boolean smoke, Color smokeColor, Color flameColor) {
+		if (smokeT == null) {
+			try {
+				TextureData data = TextureIO.newTextureData(GLProfile.getDefault(), FlameRenderer.class.getResourceAsStream("smoke.png"), GL.GL_RGBA, GL.GL_RGBA, true, null);
+				smokeT = TextureIO.newTexture(data);
+			} catch (Exception e1) {
+				e1.printStackTrace();
+			}
+		}
+		
+		gl.glRotated(90, 0, 1, 0);
+		gl.glTranslated(0, 0, 0);
+		gl.glDisable(GLLightingFunc.GL_LIGHTING);
+		gl.glEnable(GL.GL_BLEND);
+		
+		
+		if (flame) {
+			gl.glBlendFunc(GL.GL_SRC_ALPHA, GL.GL_ONE_MINUS_SRC_ALPHA);
+			
+			
+			gl.glPushMatrix();
+			gl.glScaled(.03, .03, .07);
+			gl.glBlendFunc(GL.GL_SRC_ALPHA, GL.GL_ONE);
+			drawFlame(gl, 1, new Radius() {
+				@Override
+				public double getRadius(double z) {
+					z = 1 - z;
+					return (z * z - z * z * z);
+				}
+				
+				@Override
+				public void getColor(double z, float[] color) {
+					color[0] = color[1] = color[2] = 1;
+					color[3] = 1;// - (float) (z * z);
+				}
+			}, 80, 80);
+			
+			gl.glScaled(1.4, 1.4, 1.2);
+			final float[] fc = new float[3];
+			convertColor(flameColor, fc);
+			drawFlame(gl, 1, new Radius() {
+				@Override
+				public double getRadius(double z) {
+					z = 1 - z;
+					return z * z - z * z * z;
+				}
+				
+				@Override
+				public void getColor(double z, float[] color) {
+					color[0] = fc[0];
+					color[1] = fc[1];
+					color[2] = fc[2];
+					color[3] = (1 - (float) (z));
+				}
+			}, 80, 80);
+			gl.glPopMatrix();
+		}
+		
+		if (smoke) {
+			
+			gl.glBlendFunc(GL.GL_ONE, GL.GL_ONE_MINUS_SRC_ALPHA);
+			
+			
+			smokeT.enable(gl);
+			smokeT.bind(gl);
+			
+			double z = .00;
+			double v = 0;
+			double r = 0;
+			
+			
+			gl.glEnable(GL2ES1.GL_POINT_SPRITE);
+			float quadratic[] = { 0.0f, 0.0f, 1.0f };
+			gl.glPointParameterfv(GL2ES1.GL_POINT_DISTANCE_ATTENUATION, quadratic, 0);
+			gl.glPointParameterf(GL.GL_POINT_FADE_THRESHOLD_SIZE, 60.0f);
+			
+			gl.glPointParameterf(GL2ES1.GL_POINT_SIZE_MIN, 1.0f);
+			gl.glPointParameterf(GL2ES1.GL_POINT_SIZE_MAX, 64.0f);
+			gl.glTexEnvf(GL2ES1.GL_POINT_SPRITE, GL2ES1.GL_COORD_REPLACE, GL.GL_TRUE);
+			gl.glPointSize(32.0f);
+			
+			gl.glDepthMask(false);
+			
+			gl.glTexEnvi(GL2.GL_TEXTURE_ENV, GL2.GL_TEXTURE_ENV_MODE, GL2.GL_MODULATE);
+			
+			
+			
+			float[] color = new float[4];
+			float[] fc = new float[4];
+			convertColor(flameColor, fc);
+			
+			for (int i = 0; i < 100; i++) {
+				
+				v = .01 + z * .15;
+				r = .1 * z + .0001;
+				
+				float fa = flame ? (float) (.06 / (z)) : 0;
+				fa = fa * .9f;
+				
+				convertColor(smokeColor, color);
+				color[0] = Math.min(color[0] + fc[0] * fa, 1.0f);
+				color[1] = Math.min(color[1] + fc[1] * fa, 1.0f);
+				color[2] = Math.min(color[2] + fc[2] * fa, 1.0f);
+				color[3] = 1 - fa;
+				gl.glColor4fv(color, 0);
+				
+				
+				gl.glPointSize((float) r * 5000);
+				gl.glBegin(GL.GL_POINTS);
+				for (int j = 0; j < 40; j++) {
+					gl.glVertex3d(Math.random() * v - v / 2, Math.random() * v - v / 2, z + Math.random() * v - v / 2);
+				}
+				gl.glEnd();
+				z = z + r;
+			}
+			
+			
+			gl.glDepthMask(true);
+			
+			smokeT.disable(gl);
+			
+		}
+		
+		gl.glEnable(GLLightingFunc.GL_LIGHTING);
+		
+	}
+	
+	public static void oldf(GL2 gl, boolean flame, boolean smoke, Color smokeColor, Color flameColor) {
 		
 		if (noise == null) {
 			try {
