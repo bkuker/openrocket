@@ -119,6 +119,7 @@ import javax.media.opengl.GL2;
 import javax.media.opengl.GL2ES1;
 import javax.media.opengl.GLProfile;
 import javax.media.opengl.fixedfunc.GLLightingFunc;
+import javax.media.opengl.fixedfunc.GLMatrixFunc;
 import javax.media.opengl.glu.GLU;
 import javax.media.opengl.glu.GLUquadric;
 
@@ -213,7 +214,7 @@ public final class FlameRenderer {
 			gl.glPopMatrix();
 		}
 		
-		if (smoke) {
+		if (false) {
 			
 			gl.glBlendFunc(GL.GL_ONE, GL.GL_ONE_MINUS_SRC_ALPHA);
 			
@@ -278,7 +279,81 @@ public final class FlameRenderer {
 			
 		}
 		
+		
+		
+		
+		if (smoke) {
+			gl.glBlendFunc(GL.GL_ONE, GL.GL_ONE_MINUS_SRC_ALPHA);
+			gl.glDepthMask(false);
+			
+			gl.glTexEnvi(GL2.GL_TEXTURE_ENV, GL2.GL_TEXTURE_ENV_MODE, GL2.GL_MODULATE);
+			smokeT.enable(gl);
+			smokeT.bind(gl);
+			
+			float z = 0;
+			float v = 0;
+			float r = 0;
+			
+			float[] color = new float[4];
+			float[] fc = new float[4];
+			convertColor(flameColor, fc);
+			
+			for (int i = 0; i < 100; i++) {
+				
+				v = .01f + z * .15f;
+				r = .1f * z + .0001f;
+				
+				float fa = flame ? (float) (.06 / (z)) : 0;
+				fa = fa * .9f;
+				
+				convertColor(smokeColor, color);
+				color[0] = Math.min(color[0] + fc[0] * fa, 1.0f);
+				color[1] = Math.min(color[1] + fc[1] * fa, 1.0f);
+				color[2] = Math.min(color[2] + fc[2] * fa, 1.0f);
+				color[3] = 1 - fa;
+				gl.glColor4fv(color, 0);
+				
+				for (int j = 0; j < 20; j++) {
+					float px = (float) Math.random() * v - v / 2;
+					float py = (float) Math.random() * v - v / 2;
+					float pz = z + (float) Math.random() * v - v / 2;
+					
+					gl.glPushMatrix();
+					
+					gl.glTranslatef(px, py, pz);
+					
+					final double[] mvmatrix = new double[16];
+					gl.glGetDoublev(GLMatrixFunc.GL_MODELVIEW_MATRIX, mvmatrix, 0);
+					mvmatrix[0] = mvmatrix[5] = mvmatrix[10] = 1;
+					mvmatrix[1] = mvmatrix[2] = mvmatrix[4] = mvmatrix[6] = mvmatrix[8] = mvmatrix[9] = 0;
+					gl.glLoadMatrixd(mvmatrix, 0);
+					
+					gl.glBegin(GL.GL_TRIANGLE_FAN);
+					px = py = pz = 0;
+					float d = r * 4;
+					gl.glTexCoord2f(0, 0);
+					gl.glVertex3f(-d, -d, 0);
+					gl.glTexCoord2f(0, 1);
+					gl.glVertex3f(-d, d, 0);
+					gl.glTexCoord2f(1, 1);
+					gl.glVertex3f(d, d, 0);
+					gl.glTexCoord2f(1, 0);
+					gl.glVertex3f(d, -d, 0);
+					gl.glEnd();
+					gl.glPopMatrix();
+					
+					
+				}
+				z = z + r;
+			}
+			
+			smokeT.disable(gl);
+		}
+		
+		
 		gl.glEnable(GLLightingFunc.GL_LIGHTING);
+		gl.glDepthMask(true);
+		gl.glPopMatrix();
 		
 	}
 	
