@@ -123,6 +123,7 @@ import javax.media.opengl.fixedfunc.GLMatrixFunc;
 import javax.media.opengl.glu.GLU;
 import javax.media.opengl.glu.GLUquadric;
 
+import net.sf.openrocket.motor.Motor;
 import net.sf.openrocket.util.Color;
 
 import com.jogamp.opengl.util.texture.Texture;
@@ -156,7 +157,7 @@ public final class FlameRenderer {
 	
 	static Texture smokeT;
 	
-	public static void f(GL2 gl, boolean flame, boolean smoke, Color smokeColor, Color flameColor) {
+	public static void f(GL2 gl, boolean flame, boolean smoke, Color smokeColor, Color flameColor, Motor m) {
 		if (smokeT == null) {
 			try {
 				TextureData data = TextureIO.newTextureData(GLProfile.getDefault(), FlameRenderer.class.getResourceAsStream("smoke.png"), GL.GL_RGBA, GL.GL_RGBA, true, null);
@@ -172,9 +173,9 @@ public final class FlameRenderer {
 		gl.glEnable(GL.GL_BLEND);
 		
 		
-		if (flame) {
+		if (true) {
 			gl.glBlendFunc(GL.GL_SRC_ALPHA, GL.GL_ONE_MINUS_SRC_ALPHA);
-			
+			gl.glDepthMask(false);
 			
 			gl.glPushMatrix();
 			gl.glScaled(.03, .03, .07);
@@ -212,6 +213,7 @@ public final class FlameRenderer {
 				}
 			}, 80, 80);
 			gl.glPopMatrix();
+			gl.glDepthMask(true);
 		}
 		
 		if (false) {
@@ -300,8 +302,12 @@ public final class FlameRenderer {
 			
 			for (int i = 0; i < 100; i++) {
 				
-				v = .01f + z * .15f;
-				r = .1f * z + .0001f;
+				v = .005f + z * .15f;
+				
+				if (i < 40)
+					r = .05f * z + .0001f;
+				else
+					r = .01f * z + .0001f;
 				
 				float fa = flame ? (float) (.06 / (z)) : 0;
 				fa = fa * .9f;
@@ -330,7 +336,7 @@ public final class FlameRenderer {
 					
 					gl.glBegin(GL.GL_TRIANGLE_FAN);
 					px = py = pz = 0;
-					float d = r * 4;
+					float d = 0.003f + r * 4;
 					gl.glTexCoord2f(0, 0);
 					gl.glVertex3f(-d, -d, 0);
 					gl.glTexCoord2f(0, 1);
@@ -344,7 +350,11 @@ public final class FlameRenderer {
 					
 					
 				}
-				z = z + r;
+				float dz = i / 300f;
+				dz = dz * dz;
+				if (i < 20)
+					dz = dz / 5;
+				z += dz;
 			}
 			
 			smokeT.disable(gl);

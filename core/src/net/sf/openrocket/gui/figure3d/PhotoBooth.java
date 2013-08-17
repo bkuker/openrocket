@@ -560,9 +560,7 @@ public class PhotoBooth extends JPanel implements GLEventListener {
 			for (int i = 0; i < position.length; i++) {
 				gl.glPushMatrix();
 				gl.glTranslated(position[i].x + motor.getLength(), position[i].y, position[i].z);
-				double s = Math.max(.5, Math.sqrt(motor.getAverageThrustEstimate()) / 4.0);
-				gl.glScaled(s, s, s);
-				FlameRenderer.f(gl, p.isFlame(), p.isSmoke(), p.getSmokeColor(), p.getFlameColor());
+				FlameRenderer.f(gl, p.isFlame(), p.isSmoke(), p.getSmokeColor(), p.getFlameColor(), motor);
 				gl.glPopMatrix();
 			}
 		}
