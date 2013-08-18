@@ -114,12 +114,7 @@
  */
 package net.sf.openrocket.gui.figure3d.geometry;
 
-import javax.media.opengl.GL;
 import javax.media.opengl.GL2;
-import javax.media.opengl.GL2ES1;
-import javax.media.opengl.GLProfile;
-import javax.media.opengl.fixedfunc.GLLightingFunc;
-import javax.media.opengl.fixedfunc.GLMatrixFunc;
 import javax.media.opengl.glu.GLU;
 import javax.media.opengl.glu.GLUquadric;
 
@@ -127,8 +122,6 @@ import net.sf.openrocket.motor.Motor;
 import net.sf.openrocket.util.Color;
 
 import com.jogamp.opengl.util.texture.Texture;
-import com.jogamp.opengl.util.texture.TextureData;
-import com.jogamp.opengl.util.texture.TextureIO;
 
 public final class FlameRenderer {
 	
@@ -157,319 +150,63 @@ public final class FlameRenderer {
 	
 	static Texture smokeT;
 	
+	private static interface Func {
+		float f(double d);
+	}
+	
 	public static void f(GL2 gl, boolean flame, boolean smoke, Color smokeColor, Color flameColor, Motor m) {
-		if (smokeT == null) {
-			try {
-				TextureData data = TextureIO.newTextureData(GLProfile.getDefault(), FlameRenderer.class.getResourceAsStream("smoke.png"), GL.GL_RGBA, GL.GL_RGBA, true, null);
-				smokeT = TextureIO.newTexture(data);
-			} catch (Exception e1) {
-				e1.printStackTrace();
-			}
-		}
+		GLU glu = new GLU();
+		GLUquadric q = glu.gluNewQuadric();
 		
 		gl.glRotated(90, 0, 1, 0);
 		gl.glTranslated(0, 0, 0);
-		gl.glDisable(GLLightingFunc.GL_LIGHTING);
-		gl.glEnable(GL.GL_BLEND);
+		
+		final float LEN = 10;
+		final float MAX_R = .15f;
+		final int P = 8;
+		
+		final Func radius = new Func() {
+			@Override
+			public float f(double d) {
+				return (float) (Math.atan(d) / (Math.PI / 2.0)) * MAX_R;
+			}
+		};
+		
+		final Func dZ = new Func() {
+			@Override
+			public float f(double z) {
+				return radius.f(z);
+			}
+		};
 		
 		
-		if (true) {
-			gl.glBlendFunc(GL.GL_SRC_ALPHA, GL.GL_ONE_MINUS_SRC_ALPHA);
-			gl.glDepthMask(false);
+		float z = 0.01f;
+		while (z < LEN) {
 			
 			gl.glPushMatrix();
-			gl.glScaled(.03, .03, .07);
-			gl.glBlendFunc(GL.GL_SRC_ALPHA, GL.GL_ONE);
-			drawFlame(gl, 1, new Radius() {
-				@Override
-				public double getRadius(double z) {
-					z = 1 - z;
-					return (z * z - z * z * z);
-				}
-				
-				@Override
-				public void getColor(double z, float[] color) {
-					color[0] = color[1] = color[2] = 1;
-					color[3] = 1;// - (float) (z * z);
-				}
-			}, 80, 80);
+			gl.glTranslatef(0, 0, z);
 			
-			gl.glScaled(1.4, 1.4, 1.2);
-			final float[] fc = new float[3];
-			convertColor(flameColor, fc);
-			drawFlame(gl, 1, new Radius() {
-				@Override
-				public double getRadius(double z) {
-					z = 1 - z;
-					return z * z - z * z * z;
-				}
+			for (int i = 0; i < P; i++) {
+				gl.glPushMatrix();
+				float rx = radius.f(z) - ((float) Math.random() * radius.f(z) * 2.0f);
+				float ry = radius.f(z) - ((float) Math.random() * radius.f(z) * 2.0f);
+				float rz = radius.f(z) - ((float) Math.random() * radius.f(z) * 2.0f);
+				gl.glTranslatef(rx, ry, rz);
 				
-				@Override
-				public void getColor(double z, float[] color) {
-					color[0] = fc[0];
-					color[1] = fc[1];
-					color[2] = fc[2];
-					color[3] = (1 - (float) (z));
-				}
-			}, 80, 80);
+				glu.gluSphere(q, radius.f(z), 5, 5);
+				
+				gl.glPopMatrix();
+			}
+			
+			
+			
 			gl.glPopMatrix();
-			gl.glDepthMask(true);
+			
+			z += dZ.f(z);
 		}
-		
-		if (false) {
-			
-			gl.glBlendFunc(GL.GL_ONE, GL.GL_ONE_MINUS_SRC_ALPHA);
-			
-			
-			smokeT.enable(gl);
-			smokeT.bind(gl);
-			
-			double z = .00;
-			double v = 0;
-			double r = 0;
-			
-			
-			gl.glEnable(GL2ES1.GL_POINT_SPRITE);
-			float quadratic[] = { 0.0f, 0.0f, 1.0f };
-			gl.glPointParameterfv(GL2ES1.GL_POINT_DISTANCE_ATTENUATION, quadratic, 0);
-			gl.glPointParameterf(GL.GL_POINT_FADE_THRESHOLD_SIZE, 60.0f);
-			
-			gl.glPointParameterf(GL2ES1.GL_POINT_SIZE_MIN, 1.0f);
-			gl.glPointParameterf(GL2ES1.GL_POINT_SIZE_MAX, 64.0f);
-			gl.glTexEnvf(GL2ES1.GL_POINT_SPRITE, GL2ES1.GL_COORD_REPLACE, GL.GL_TRUE);
-			gl.glPointSize(32.0f);
-			
-			gl.glDepthMask(false);
-			
-			gl.glTexEnvi(GL2.GL_TEXTURE_ENV, GL2.GL_TEXTURE_ENV_MODE, GL2.GL_MODULATE);
-			
-			
-			
-			float[] color = new float[4];
-			float[] fc = new float[4];
-			convertColor(flameColor, fc);
-			
-			for (int i = 0; i < 100; i++) {
-				
-				v = .01 + z * .15;
-				r = .1 * z + .0001;
-				
-				float fa = flame ? (float) (.06 / (z)) : 0;
-				fa = fa * .9f;
-				
-				convertColor(smokeColor, color);
-				color[0] = Math.min(color[0] + fc[0] * fa, 1.0f);
-				color[1] = Math.min(color[1] + fc[1] * fa, 1.0f);
-				color[2] = Math.min(color[2] + fc[2] * fa, 1.0f);
-				color[3] = 1 - fa;
-				gl.glColor4fv(color, 0);
-				
-				
-				gl.glPointSize((float) r * 5000);
-				gl.glBegin(GL.GL_POINTS);
-				for (int j = 0; j < 40; j++) {
-					gl.glVertex3d(Math.random() * v - v / 2, Math.random() * v - v / 2, z + Math.random() * v - v / 2);
-				}
-				gl.glEnd();
-				z = z + r;
-			}
-			
-			
-			gl.glDepthMask(true);
-			
-			smokeT.disable(gl);
-			
-		}
-		
-		
-		
-		
-		if (smoke) {
-			gl.glBlendFunc(GL.GL_ONE, GL.GL_ONE_MINUS_SRC_ALPHA);
-			gl.glDepthMask(false);
-			
-			gl.glTexEnvi(GL2.GL_TEXTURE_ENV, GL2.GL_TEXTURE_ENV_MODE, GL2.GL_MODULATE);
-			smokeT.enable(gl);
-			smokeT.bind(gl);
-			
-			float z = 0;
-			float v = 0;
-			float r = 0;
-			
-			float[] color = new float[4];
-			float[] fc = new float[4];
-			convertColor(flameColor, fc);
-			
-			for (int i = 0; i < 100; i++) {
-				
-				v = .005f + z * .15f;
-				
-				if (i < 40)
-					r = .05f * z + .0001f;
-				else
-					r = .01f * z + .0001f;
-				
-				float fa = flame ? (float) (.06 / (z)) : 0;
-				fa = fa * .9f;
-				
-				convertColor(smokeColor, color);
-				color[0] = Math.min(color[0] + fc[0] * fa, 1.0f);
-				color[1] = Math.min(color[1] + fc[1] * fa, 1.0f);
-				color[2] = Math.min(color[2] + fc[2] * fa, 1.0f);
-				color[3] = 1 - fa;
-				gl.glColor4fv(color, 0);
-				
-				for (int j = 0; j < 20; j++) {
-					float px = (float) Math.random() * v - v / 2;
-					float py = (float) Math.random() * v - v / 2;
-					float pz = z + (float) Math.random() * v - v / 2;
-					
-					gl.glPushMatrix();
-					
-					gl.glTranslatef(px, py, pz);
-					
-					final double[] mvmatrix = new double[16];
-					gl.glGetDoublev(GLMatrixFunc.GL_MODELVIEW_MATRIX, mvmatrix, 0);
-					mvmatrix[0] = mvmatrix[5] = mvmatrix[10] = 1;
-					mvmatrix[1] = mvmatrix[2] = mvmatrix[4] = mvmatrix[6] = mvmatrix[8] = mvmatrix[9] = 0;
-					gl.glLoadMatrixd(mvmatrix, 0);
-					
-					gl.glBegin(GL.GL_TRIANGLE_FAN);
-					px = py = pz = 0;
-					float d = 0.003f + r * 4;
-					gl.glTexCoord2f(0, 0);
-					gl.glVertex3f(-d, -d, 0);
-					gl.glTexCoord2f(0, 1);
-					gl.glVertex3f(-d, d, 0);
-					gl.glTexCoord2f(1, 1);
-					gl.glVertex3f(d, d, 0);
-					gl.glTexCoord2f(1, 0);
-					gl.glVertex3f(d, -d, 0);
-					gl.glEnd();
-					gl.glPopMatrix();
-					
-					
-				}
-				float dz = i / 300f;
-				dz = dz * dz;
-				if (i < 20)
-					dz = dz / 5;
-				z += dz;
-			}
-			
-			smokeT.disable(gl);
-		}
-		
-		
-		gl.glEnable(GLLightingFunc.GL_LIGHTING);
-		gl.glDepthMask(true);
-		gl.glPopMatrix();
 		
 	}
 	
-	public static void oldf(GL2 gl, boolean flame, boolean smoke, Color smokeColor, Color flameColor) {
-		
-		if (noise == null) {
-			try {
-				TextureData data = TextureIO.newTextureData(GLProfile.getDefault(), FlameRenderer.class.getResourceAsStream("snoise.png"), GL.GL_RGBA, GL.GL_RGBA, true, null);
-				noise = TextureIO.newTexture(data);
-			} catch (Exception e1) {
-				e1.printStackTrace();
-			}
-		}
-		
-		gl.glBlendFunc(GL.GL_SRC_ALPHA, GL.GL_ONE_MINUS_SRC_ALPHA);
-		gl.glEnable(GL.GL_BLEND);
-		gl.glDisable(GLLightingFunc.GL_LIGHTING);
-		gl.glRotated(90, 0, 1, 0);
-		gl.glTranslated(0, 0, 0);
-		
-		
-		if (flame) {
-			gl.glPushMatrix();
-			gl.glScaled(.03, .03, .07);
-			gl.glBlendFunc(GL.GL_SRC_ALPHA, GL.GL_ONE);
-			drawFlame(gl, 1, new Radius() {
-				@Override
-				public double getRadius(double z) {
-					z = 1 - z;
-					return (z * z - z * z * z);
-				}
-				
-				@Override
-				public void getColor(double z, float[] color) {
-					color[0] = color[1] = color[2] = 1;
-					color[3] = 1;// - (float) (z * z);
-				}
-			}, 80, 80);
-			
-			gl.glScaled(1.4, 1.4, 1.2);
-			final float[] fc = new float[3];
-			convertColor(flameColor, fc);
-			drawFlame(gl, 1, new Radius() {
-				@Override
-				public double getRadius(double z) {
-					z = 1 - z;
-					return z * z - z * z * z;
-				}
-				
-				@Override
-				public void getColor(double z, float[] color) {
-					color[0] = fc[0];
-					color[1] = fc[1];
-					color[2] = fc[2];
-					color[3] = (1 - (float) (z));
-				}
-			}, 80, 80);
-			gl.glPopMatrix();
-		}
-		
-		if (smoke) {
-			gl.glBlendFunc(GL.GL_SRC_ALPHA, GL.GL_ONE_MINUS_SRC_ALPHA);
-			GLU glu = new GLU();
-			GLUquadric q = glu.gluNewQuadric();
-			glu.gluQuadricTexture(q, true);
-			
-			float[] color = new float[4];
-			convertColor(smokeColor, color);
-			color[3] = 0.4f;
-			
-			gl.glColor4fv(color, 0);
-			noise.enable(gl);
-			noise.bind(gl);
-			
-			double z = .02;
-			double v = 0;
-			double r = 0;
-			for (int i = 0; i < 50; i++) {
-				if (z < 2) {
-					v = z * .1;
-					r = .1 * z + .005;
-				} else {
-					v += .01;
-				}
-				if (i < 40)
-					color[3] = Math.min(1, color[3] + .01f);
-				else
-					color[3] = color[3] * .9f;
-				gl.glColor4fv(color, 0);
-				for (int j = 0; j < 3; j++) {
-					gl.glPushMatrix();
-					gl.glTranslated(Math.random() * v - v / 2, Math.random() * v - v / 2, z + Math.random() * v - v / 2);
-					gl.glRotated(Math.random() * 360, 1, 0, 0);
-					gl.glRotated(Math.random() * 360, 0, 1, 0);
-					
-					glu.gluSphere(q, r, 5, 5);
-					gl.glPopMatrix();
-				}
-				z = z + r;
-			}
-			
-			noise.disable(gl);
-		}
-		
-		gl.glEnable(GLLightingFunc.GL_LIGHTING);
-	}
 	
 	private static void drawFlame(final GL2 gl, final double length, final Radius rad,
 			final int slices, final int stacks) {
