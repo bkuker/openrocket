@@ -114,9 +114,11 @@
  */
 package net.sf.openrocket.gui.figure3d.geometry;
 
+import javax.media.opengl.GL;
 import javax.media.opengl.GL2;
-import javax.media.opengl.glu.GLU;
-import javax.media.opengl.glu.GLUquadric;
+import javax.media.opengl.GL2GL3;
+import javax.media.opengl.fixedfunc.GLLightingFunc;
+import javax.media.opengl.fixedfunc.GLMatrixFunc;
 
 import net.sf.openrocket.motor.Motor;
 import net.sf.openrocket.util.Color;
@@ -155,9 +157,6 @@ public final class FlameRenderer {
 	}
 	
 	public static void f(GL2 gl, boolean flame, boolean smoke, Color smokeColor, Color flameColor, Motor m) {
-		GLU glu = new GLU();
-		GLUquadric q = glu.gluNewQuadric();
-		
 		gl.glRotated(90, 0, 1, 0);
 		gl.glTranslated(0, 0, 0);
 		
@@ -179,6 +178,9 @@ public final class FlameRenderer {
 			}
 		};
 		
+		gl.glLineWidth(1.0f);
+		gl.glMaterialfv(GL.GL_FRONT_AND_BACK, GLLightingFunc.GL_EMISSION, new float[] { 1, 0, 0 }, 0);
+		gl.glPolygonMode(GL.GL_FRONT_AND_BACK, GL2GL3.GL_LINE);
 		
 		float z = 0.01f;
 		while (z < LEN) {
@@ -193,9 +195,28 @@ public final class FlameRenderer {
 				float rz = radius.f(z) - ((float) Math.random() * radius.f(z) * 2.0f);
 				gl.glTranslatef(rx, ry, rz);
 				
-				glu.gluSphere(q, radius.f(z), 5, 5);
+				final double[] mvmatrix = new double[16];
+				gl.glGetDoublev(GLMatrixFunc.GL_MODELVIEW_MATRIX, mvmatrix, 0);
+				mvmatrix[0] = mvmatrix[5] = mvmatrix[10] = 1;
+				mvmatrix[1] = mvmatrix[2] = mvmatrix[4] = mvmatrix[6] = mvmatrix[8] = mvmatrix[9] = 0;
+				gl.glLoadMatrixd(mvmatrix, 0);
+				
+				gl.glBegin(GL.GL_TRIANGLE_FAN);
+				float d = radius.f(z);
+				gl.glTexCoord2f(0, 0);
+				gl.glVertex3f(-d, -d, 0);
+				gl.glTexCoord2f(0, 1);
+				gl.glVertex3f(-d, d, 0);
+				gl.glTexCoord2f(1, 1);
+				gl.glVertex3f(d, d, 0);
+				gl.glTexCoord2f(1, 0);
+				gl.glVertex3f(d, -d, 0);
+				gl.glEnd();
+				
 				
 				gl.glPopMatrix();
+				
+				
 			}
 			
 			
@@ -204,6 +225,10 @@ public final class FlameRenderer {
 			
 			z += dZ.f(z);
 		}
+		
+		
+		gl.glPolygonMode(GL.GL_FRONT_AND_BACK, GL2GL3.GL_FILL);
+		
 		
 	}
 	
