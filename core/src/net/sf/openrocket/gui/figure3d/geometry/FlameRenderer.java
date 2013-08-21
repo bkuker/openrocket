@@ -116,7 +116,7 @@ package net.sf.openrocket.gui.figure3d.geometry;
 
 import javax.media.opengl.GL;
 import javax.media.opengl.GL2;
-import javax.media.opengl.GL2GL3;
+import javax.media.opengl.GLProfile;
 import javax.media.opengl.fixedfunc.GLLightingFunc;
 import javax.media.opengl.fixedfunc.GLMatrixFunc;
 
@@ -124,6 +124,8 @@ import net.sf.openrocket.motor.Motor;
 import net.sf.openrocket.util.Color;
 
 import com.jogamp.opengl.util.texture.Texture;
+import com.jogamp.opengl.util.texture.TextureData;
+import com.jogamp.opengl.util.texture.TextureIO;
 
 public final class FlameRenderer {
 	
@@ -156,7 +158,60 @@ public final class FlameRenderer {
 		float f(double d);
 	}
 	
+	private static void trail(GL2 gl, Func radius, Func dZ, float LEN, int P, Color color) {
+		float[] c = new float[4];
+		convertColor(color, c);
+		gl.glColor3fv(c, 0);
+		
+		float z = 0.01f;
+		while (z < LEN) {
+			gl.glPushMatrix();
+			gl.glTranslatef(0, 0, z);
+			
+			for (int i = 0; i < P; i++) {
+				gl.glPushMatrix();
+				float rx = radius.f(z) - ((float) Math.random() * radius.f(z) * 2.0f);
+				float ry = radius.f(z) - ((float) Math.random() * radius.f(z) * 2.0f);
+				float rz = radius.f(z) - ((float) Math.random() * radius.f(z) * 2.0f);
+				gl.glTranslatef(rx, ry, rz);
+				
+				final double[] mvmatrix = new double[16];
+				gl.glGetDoublev(GLMatrixFunc.GL_MODELVIEW_MATRIX, mvmatrix, 0);
+				mvmatrix[0] = mvmatrix[5] = mvmatrix[10] = 1;
+				mvmatrix[1] = mvmatrix[2] = mvmatrix[4] = mvmatrix[6] = mvmatrix[8] = mvmatrix[9] = 0;
+				gl.glLoadMatrixd(mvmatrix, 0);
+				
+				gl.glBegin(GL.GL_TRIANGLE_FAN);
+				float d = radius.f(z) * 2;
+				gl.glTexCoord2f(0, 0);
+				gl.glVertex3f(-d, -d, 0);
+				gl.glTexCoord2f(0, 1);
+				gl.glVertex3f(-d, d, 0);
+				gl.glTexCoord2f(1, 1);
+				gl.glVertex3f(d, d, 0);
+				gl.glTexCoord2f(1, 0);
+				gl.glVertex3f(d, -d, 0);
+				gl.glEnd();
+				
+				gl.glPopMatrix();
+			}
+			
+			gl.glPopMatrix();
+			
+			z += dZ.f(z);
+		}
+	}
+	
 	public static void f(GL2 gl, boolean flame, boolean smoke, Color smokeColor, Color flameColor, Motor m) {
+		if (smokeT == null) {
+			try {
+				TextureData data = TextureIO.newTextureData(GLProfile.getDefault(), FlameRenderer.class.getResourceAsStream("smoke.png"), GL.GL_RGBA, GL.GL_RGBA, true, null);
+				smokeT = TextureIO.newTexture(data);
+			} catch (Exception e1) {
+				e1.printStackTrace();
+			}
+		}
+		
 		gl.glRotated(90, 0, 1, 0);
 		gl.glTranslated(0, 0, 0);
 		
@@ -178,57 +233,29 @@ public final class FlameRenderer {
 			}
 		};
 		
-		gl.glLineWidth(1.0f);
-		gl.glMaterialfv(GL.GL_FRONT_AND_BACK, GLLightingFunc.GL_EMISSION, new float[] { 1, 0, 0 }, 0);
-		gl.glPolygonMode(GL.GL_FRONT_AND_BACK, GL2GL3.GL_LINE);
 		
-		float z = 0.01f;
-		while (z < LEN) {
-			
-			gl.glPushMatrix();
-			gl.glTranslatef(0, 0, z);
-			
-			for (int i = 0; i < P; i++) {
-				gl.glPushMatrix();
-				float rx = radius.f(z) - ((float) Math.random() * radius.f(z) * 2.0f);
-				float ry = radius.f(z) - ((float) Math.random() * radius.f(z) * 2.0f);
-				float rz = radius.f(z) - ((float) Math.random() * radius.f(z) * 2.0f);
-				gl.glTranslatef(rx, ry, rz);
-				
-				final double[] mvmatrix = new double[16];
-				gl.glGetDoublev(GLMatrixFunc.GL_MODELVIEW_MATRIX, mvmatrix, 0);
-				mvmatrix[0] = mvmatrix[5] = mvmatrix[10] = 1;
-				mvmatrix[1] = mvmatrix[2] = mvmatrix[4] = mvmatrix[6] = mvmatrix[8] = mvmatrix[9] = 0;
-				gl.glLoadMatrixd(mvmatrix, 0);
-				
-				gl.glBegin(GL.GL_TRIANGLE_FAN);
-				float d = radius.f(z);
-				gl.glTexCoord2f(0, 0);
-				gl.glVertex3f(-d, -d, 0);
-				gl.glTexCoord2f(0, 1);
-				gl.glVertex3f(-d, d, 0);
-				gl.glTexCoord2f(1, 1);
-				gl.glVertex3f(d, d, 0);
-				gl.glTexCoord2f(1, 0);
-				gl.glVertex3f(d, -d, 0);
-				gl.glEnd();
-				
-				
-				gl.glPopMatrix();
-				
-				
-			}
-			
-			
-			
-			gl.glPopMatrix();
-			
-			z += dZ.f(z);
+		gl.glDisable(GLLightingFunc.GL_LIGHTING);
+		gl.glEnable(GL.GL_BLEND);
+		gl.glTexEnvi(GL2.GL_TEXTURE_ENV, GL2.GL_TEXTURE_ENV_MODE, GL2.GL_MODULATE);
+		gl.glDepthMask(false);
+		
+		
+		smokeT.enable(gl);
+		smokeT.bind(gl);
+		
+		if (smoke) {
+			gl.glBlendFunc(GL.GL_ONE, GL.GL_ONE_MINUS_SRC_ALPHA);
+			trail(gl, radius, dZ, LEN, P, smokeColor);
 		}
 		
+		if (smoke && flame) {
+			gl.glBlendFunc(GL.GL_ONE, GL.GL_ONE);
+			trail(gl, radius, dZ, LEN / 40, P * 2, flameColor);
+		}
 		
-		gl.glPolygonMode(GL.GL_FRONT_AND_BACK, GL2GL3.GL_FILL);
-		
+		smokeT.disable(gl);
+		gl.glEnable(GLLightingFunc.GL_LIGHTING);
+		gl.glDepthMask(true);
 		
 	}
 	
