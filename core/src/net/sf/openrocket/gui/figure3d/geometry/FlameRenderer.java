@@ -114,20 +114,28 @@
  */
 package net.sf.openrocket.gui.figure3d.geometry;
 
+import java.util.Random;
+
 import javax.media.opengl.GL;
 import javax.media.opengl.GL2;
 import javax.media.opengl.GLProfile;
 import javax.media.opengl.fixedfunc.GLLightingFunc;
 import javax.media.opengl.fixedfunc.GLMatrixFunc;
+import javax.media.opengl.glu.GLU;
 
 import net.sf.openrocket.motor.Motor;
 import net.sf.openrocket.util.Color;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.jogamp.opengl.util.texture.Texture;
 import com.jogamp.opengl.util.texture.TextureData;
 import com.jogamp.opengl.util.texture.TextureIO;
 
 public final class FlameRenderer {
+	
+	private static final Logger log = LoggerFactory.getLogger(FlameRenderer.class);
 	
 	private FlameRenderer() {
 	}
@@ -165,12 +173,54 @@ public final class FlameRenderer {
 		}
 	}
 	
+	
+	
 	private static void trail(GL2 gl, Func radius, Func dZ, Func alpha, float LEN, int P, Color color) {
 		float[] c = new float[4];
 		convertColor(color, c);
 		
-		float z = 0.002f;
-		while (z < LEN) {
+		//Figure out if the flame and smoke is point "in" or "out" of the screen
+		//in order to draw the particles in the right Z order
+		final boolean startAtTop;
+		{
+			final double[] mvmatrix = new double[16];
+			final double[] projmatrix = new double[16];
+			final int[] viewport = new int[4];
+			
+			gl.glGetIntegerv(GL.GL_VIEWPORT, viewport, 0);
+			gl.glGetDoublev(GLMatrixFunc.GL_MODELVIEW_MATRIX, mvmatrix, 0);
+			gl.glGetDoublev(GLMatrixFunc.GL_PROJECTION_MATRIX, projmatrix, 0);
+			
+			final double out[] = new double[4];
+			final double out2[] = new double[4];
+			(new GLU()).gluProject(0, 0, 0, mvmatrix, 0, projmatrix, 0, viewport, 0,
+					out, 0);
+			(new GLU()).gluProject(0, 0, 0.01f, mvmatrix, 0, projmatrix, 0, viewport, 0,
+					out2, 0);
+			
+			startAtTop = out2[2] < out[2];
+		}
+		
+		final float start;
+		final float len;
+		final float mult;
+		
+		if (startAtTop) {
+			start = 0.002f;
+			len = LEN;
+			mult = 1;
+		} else {
+			start = LEN;
+			len = 0.002f;
+			mult = -1;
+		}
+		
+		//Use the same seed every time
+		Random r = new Random(0);
+		
+		//Loop forwards or backwards. Technically the dZ is applied differently
+		//in either direction, but the difference should be vanishingly small.
+		for (float z = start; mult * z < mult * len; z += mult * dZ.f(z)) {
 			gl.glPushMatrix();
 			gl.glTranslatef(0, 0, z);
 			
@@ -180,9 +230,9 @@ public final class FlameRenderer {
 			
 			for (int i = 0; i < P; i++) {
 				gl.glPushMatrix();
-				float rx = radius.f(z) - ((float) Math.random() * radius.f(z) * 2.0f);
-				float ry = radius.f(z) - ((float) Math.random() * radius.f(z) * 2.0f);
-				float rz = radius.f(z) - ((float) Math.random() * radius.f(z) * 2.0f);
+				float rx = radius.f(z) - ((float) r.nextFloat() * radius.f(z) * 2.0f);
+				float ry = radius.f(z) - ((float) r.nextFloat() * radius.f(z) * 2.0f);
+				float rz = radius.f(z) - ((float) r.nextFloat() * radius.f(z) * 2.0f);
 				gl.glTranslatef(rx, ry, rz);
 				
 				final double[] mvmatrix = new double[16];
@@ -209,8 +259,6 @@ public final class FlameRenderer {
 			}
 			
 			gl.glPopMatrix();
-			
-			z += dZ.f(z);
 		}
 	}
 	
@@ -226,6 +274,11 @@ public final class FlameRenderer {
 		
 		gl.glRotated(90, 0, 1, 0);
 		gl.glTranslated(0, 0, 0);
+		
+		gl.glTexParameterf(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_MAX_ANISOTROPY_EXT, 1.0f);
+		gl.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_MIN_FILTER, GL.GL_LINEAR);
+		gl.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_MAG_FILTER, GL.GL_LINEAR);
+		
 		
 		gl.glDisable(GLLightingFunc.GL_LIGHTING);
 		gl.glEnable(GL.GL_BLEND);
