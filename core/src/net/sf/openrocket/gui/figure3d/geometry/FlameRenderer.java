@@ -152,15 +152,31 @@ public final class FlameRenderer {
 		float f(double d);
 	}
 	
-	private static void trail(GL2 gl, Func radius, Func dZ, float LEN, int P, Color color) {
+	private static final class Const implements Func {
+		final float val;
+		
+		public Const(final float val) {
+			this.val = val;
+		}
+		
+		@Override
+		public float f(final double d) {
+			return val;
+		}
+	}
+	
+	private static void trail(GL2 gl, Func radius, Func dZ, Func alpha, float LEN, int P, Color color) {
 		float[] c = new float[4];
 		convertColor(color, c);
-		gl.glColor3fv(c, 0);
 		
 		float z = 0.002f;
 		while (z < LEN) {
 			gl.glPushMatrix();
 			gl.glTranslatef(0, 0, z);
+			
+			c[3] = alpha.f(z);
+			gl.glColor4fv(c, 0);
+			
 			
 			for (int i = 0; i < P; i++) {
 				gl.glPushMatrix();
@@ -174,6 +190,8 @@ public final class FlameRenderer {
 				mvmatrix[0] = mvmatrix[5] = mvmatrix[10] = 1;
 				mvmatrix[1] = mvmatrix[2] = mvmatrix[4] = mvmatrix[6] = mvmatrix[8] = mvmatrix[9] = 0;
 				gl.glLoadMatrixd(mvmatrix, 0);
+				
+				//TODO Add a random rotation to prevent artifacts from texture.
 				
 				gl.glBegin(GL.GL_TRIANGLE_FAN);
 				float d = radius.f(z) * 2;
@@ -199,7 +217,7 @@ public final class FlameRenderer {
 	public static void f(GL2 gl, boolean flame, boolean smoke, Color smokeColor, Color flameColor, Motor m) {
 		if (smokeT == null) {
 			try {
-				TextureData data = TextureIO.newTextureData(GLProfile.getDefault(), FlameRenderer.class.getResourceAsStream("smoke.png"), GL.GL_RGBA, GL.GL_RGBA, true, null);
+				TextureData data = TextureIO.newTextureData(GLProfile.getDefault(), FlameRenderer.class.getResourceAsStream("smoke2.png"), GL.GL_RGBA, GL.GL_RGBA, true, null);
 				smokeT = TextureIO.newTexture(data);
 			} catch (Exception e1) {
 				e1.printStackTrace();
@@ -239,21 +257,21 @@ public final class FlameRenderer {
 				}
 			};
 			
-			gl.glBlendFunc(GL.GL_ONE, GL.GL_ONE_MINUS_SRC_ALPHA);
-			trail(gl, radius, dZ, LEN, P * 2, smokeColor);
+			gl.glBlendFunc(GL.GL_SRC_ALPHA, GL.GL_ONE_MINUS_SRC_ALPHA);
+			trail(gl, radius, dZ, new Const(0.08f), LEN, P * 2, smokeColor);
 		}
 		
 		
 		
 		if (flame) {
-			final float FLEN = 0.15f;
+			final float FLEN = 0.3f;
 			final int FP = 6;
 			final Func fr = new Func() {
 				@Override
 				public float f(double z) {
 					z = z / FLEN;
 					z = 1 - z;
-					return (float) (z * z - z * z * z) * .04f;
+					return (float) (z * z - z * z * z) * .06f;
 				}
 			};
 			
@@ -264,8 +282,14 @@ public final class FlameRenderer {
 				}
 			};
 			
-			gl.glBlendFunc(GL.GL_ONE, GL.GL_ONE);
-			trail(gl, fr, fdZ, FLEN, FP, flameColor);
+			final Func alpha = new Func() {
+				public float f(double z) {
+					return 0.2f * (float) Math.pow((1.0f - (float) z / FLEN), 4);
+				};
+			};
+			
+			gl.glBlendFunc(GL.GL_SRC_ALPHA, GL.GL_ONE);
+			trail(gl, fr, fdZ, alpha, FLEN, FP, flameColor);
 		}
 		
 		smokeT.disable(gl);
@@ -273,7 +297,5 @@ public final class FlameRenderer {
 		gl.glDepthMask(true);
 		
 	}
-	
-	
 	
 }
