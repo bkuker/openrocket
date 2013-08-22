@@ -132,12 +132,6 @@ public final class FlameRenderer {
 	private FlameRenderer() {
 	}
 	
-	private static interface Radius {
-		double getRadius(double z);
-		
-		public void getColor(double z, float[] color);
-	}
-	
 	static Texture noise;
 	
 	protected static void convertColor(Color color, float[] out) {
@@ -163,7 +157,7 @@ public final class FlameRenderer {
 		convertColor(color, c);
 		gl.glColor3fv(c, 0);
 		
-		float z = 0.01f;
+		float z = 0.002f;
 		while (z < LEN) {
 			gl.glPushMatrix();
 			gl.glTranslatef(0, 0, z);
@@ -215,27 +209,10 @@ public final class FlameRenderer {
 		gl.glRotated(90, 0, 1, 0);
 		gl.glTranslated(0, 0, 0);
 		
-		final float LEN = 10;
-		final float MAX_R = .15f;
-		final int P = 8;
-		
-		final Func radius = new Func() {
-			@Override
-			public float f(double d) {
-				return (float) (Math.atan(d) / (Math.PI / 2.0)) * MAX_R;
-			}
-		};
-		
-		final Func dZ = new Func() {
-			@Override
-			public float f(double z) {
-				return radius.f(z);
-			}
-		};
-		
-		
 		gl.glDisable(GLLightingFunc.GL_LIGHTING);
 		gl.glEnable(GL.GL_BLEND);
+		
+		
 		gl.glTexEnvi(GL2.GL_TEXTURE_ENV, GL2.GL_TEXTURE_ENV_MODE, GL2.GL_MODULATE);
 		gl.glDepthMask(false);
 		
@@ -244,13 +221,51 @@ public final class FlameRenderer {
 		smokeT.bind(gl);
 		
 		if (smoke) {
+			final float LEN = 10;
+			final float MAX_R = .15f;
+			final int P = 10;
+			
+			final Func radius = new Func() {
+				@Override
+				public float f(double d) {
+					return (float) (Math.atan(d) / (Math.PI / 2.0)) * MAX_R + 0.001f;
+				}
+			};
+			
+			final Func dZ = new Func() {
+				@Override
+				public float f(double z) {
+					return radius.f(z);
+				}
+			};
+			
 			gl.glBlendFunc(GL.GL_ONE, GL.GL_ONE_MINUS_SRC_ALPHA);
-			trail(gl, radius, dZ, LEN, P, smokeColor);
+			trail(gl, radius, dZ, LEN, P * 2, smokeColor);
 		}
 		
-		if (smoke && flame) {
+		
+		
+		if (flame) {
+			final float FLEN = 0.15f;
+			final int FP = 6;
+			final Func fr = new Func() {
+				@Override
+				public float f(double z) {
+					z = z / FLEN;
+					z = 1 - z;
+					return (float) (z * z - z * z * z) * .04f;
+				}
+			};
+			
+			final Func fdZ = new Func() {
+				@Override
+				public float f(double z) {
+					return 0.002f;
+				}
+			};
+			
 			gl.glBlendFunc(GL.GL_ONE, GL.GL_ONE);
-			trail(gl, radius, dZ, LEN / 40, P * 2, flameColor);
+			trail(gl, fr, fdZ, FLEN, FP, flameColor);
 		}
 		
 		smokeT.disable(gl);
@@ -260,74 +275,5 @@ public final class FlameRenderer {
 	}
 	
 	
-	private static void drawFlame(final GL2 gl, final double length, final Radius rad,
-			final int slices, final int stacks) {
-		
-		double da = 2.0f * Math.PI / slices, r = 0, dzBase = (double) length / stacks;
-		double x, y, z = 0, nz, lnz = 0;
-		double ds = 1.0f / slices;
-		
-		float color[] = new float[4];
-		float colorNext[] = new float[4];
-		
-		while (z < length) {
-			double t = z / length;
-			
-			double dz = t < 0.025 ? dzBase / 8.0 : dzBase;
-			double zNext = Math.min(z + dz, length);
-			
-			r = Math.max(0, rad.getRadius(z));
-			double rNext = Math.max(0, rad.getRadius(zNext));
-			
-			nz = (r - rNext) / dz;
-			
-			double s = 0.0f;
-			
-			rad.getColor(zNext, colorNext);
-			rad.getColor(z, color);
-			
-			gl.glBegin(GL2.GL_QUAD_STRIP);
-			for (int i = 0; i <= slices; i++) {
-				if (i == slices) {
-					x = Math.sin(0.0f);
-					y = Math.cos(0.0f);
-				} else {
-					x = Math.sin((i * da));
-					y = Math.cos((i * da));
-				}
-				if (r == 0) {
-					normal3d(gl, x, y, nz);
-				} else {
-					normal3d(gl, x, y, lnz);
-				}
-				gl.glTexCoord2d(s, z / length);
-				gl.glColor4fv(color, 0);
-				gl.glVertex3d((x * r), (y * r), z);
-				
-				
-				normal3d(gl, x, y, nz);
-				gl.glTexCoord2d(s, zNext / length);
-				gl.glColor4fv(colorNext, 0);
-				gl.glVertex3d((x * rNext), (y * rNext), zNext);
-				
-				s += ds;
-			} // for slices
-			gl.glEnd();
-			lnz = nz;
-			z = Math.min(z + dz, length);
-		} // for stacks
-		
-	}
-	
-	static final void normal3d(GL2 gl, double x, double y, double z) {
-		double mag;
-		mag = (double) Math.sqrt(x * x + y * y + z * z);
-		if (mag > 0.00001F) {
-			x /= mag;
-			y /= mag;
-			z /= mag;
-		}
-		gl.glNormal3d(x, y, z);
-	}
 	
 }
