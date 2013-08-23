@@ -47,13 +47,12 @@ public class AnnotationFinderImpl implements AnnotationFinder {
 				}
 				
 				cf.detect(files.toArray(new File[0]));
-			} else {
-				
-				/*
-				 * If not using a URLClassLoader, just do the default.
-				 */
-				cf.detect();
 			}
+			
+			//TODO: I made this always get called so maven tests work
+			//FIXME I have NO IDEA WHAT IT CHANGES -bkuker
+			cf.detect();
+			
 			
 		} catch (IOException e) {
 			throw new BugException("Unable to search class path", e);

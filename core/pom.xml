@@ -60,13 +60,19 @@
 		</dependency>
 
 		<dependency>
+			<groupId>ch.qos.logback</groupId>
+			<artifactId>logback-classic</artifactId>
+			<version>1.0.12</version>
+		</dependency>
+
+		<dependency>
 			<groupId>net.sf.bogus</groupId>
 			<artifactId>test-plugin</artifactId>
 			<version>1.0.0</version>
 			<scope>system</scope>
 			<systemPath>${project.basedir}/src/test/resources/test-plugin.jar</systemPath>
 		</dependency>
-		
+
 	</dependencies>
 	<build>
 		<plugins>
