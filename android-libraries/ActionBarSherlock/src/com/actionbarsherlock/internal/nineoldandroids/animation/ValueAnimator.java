@@ -615,6 +615,7 @@ public class ValueAnimator extends Animator {
                         }
                     }
                     // fall through to process first frame of new animations
+                    //$FALL-THROUGH$
                 case ANIMATION_FRAME:
                     // currentTime holds the common time for all animations processed
                     // during this frame

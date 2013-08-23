@@ -160,7 +160,7 @@ or to a theme attribute in the form "<code>?[<i>package</i>:][<i>type</i>:]<i>na
 theme attribute (in the form
 "<code>?[<i>package</i>:][<i>type</i>:]<i>name</i></code>")
 containing a value of this type.
-          @attr name android:collapsible
+          @attr name pl.polidea.treeview:collapsible
         */
         public static final int TreeViewList_collapsible = 0;
         /**
@@ -174,7 +174,7 @@ containing a value of this type.
 theme attribute (in the form
 "<code>?[<i>package</i>:][<i>type</i>:]<i>name</i></code>")
 containing a value of this type.
-          @attr name android:handle_trackball_press
+          @attr name pl.polidea.treeview:handle_trackball_press
         */
         public static final int TreeViewList_handle_trackball_press = 4;
         /**
@@ -190,7 +190,7 @@ in (inches), mm (millimeters).
 theme attribute (in the form
 "<code>?[<i>package</i>:][<i>type</i>:]<i>name</i></code>")
 containing a value of this type.
-          @attr name android:indent_width
+          @attr name pl.polidea.treeview:indent_width
         */
         public static final int TreeViewList_indent_width = 3;
         /**
@@ -202,7 +202,7 @@ containing a value of this type.
 or to a theme attribute in the form "<code>?[<i>package</i>:][<i>type</i>:]<i>name</i></code>".
 <p>May be a color value, in the form of "<code>#<i>rgb</i></code>", "<code>#<i>argb</i></code>",
 "<code>#<i>rrggbb</i></code>", or "<code>#<i>aarrggbb</i></code>".
-          @attr name android:indicator_background
+          @attr name pl.polidea.treeview:indicator_background
         */
         public static final int TreeViewList_indicator_background = 6;
         /**
@@ -233,7 +233,7 @@ or to a theme attribute in the form "<code>?[<i>package</i>:][<i>type</i>:]<i>na
 				The clip will be based on the horizontal gravity: a left gravity will clip the right edge, a right gravity will clip the
 				left edge, and neither will clip both edges. </td></tr>
 </table>
-          @attr name android:indicator_gravity
+          @attr name pl.polidea.treeview:indicator_gravity
         */
         public static final int TreeViewList_indicator_gravity = 5;
         /**
@@ -245,7 +245,7 @@ or to a theme attribute in the form "<code>?[<i>package</i>:][<i>type</i>:]<i>na
 or to a theme attribute in the form "<code>?[<i>package</i>:][<i>type</i>:]<i>name</i></code>".
 <p>May be a color value, in the form of "<code>#<i>rgb</i></code>", "<code>#<i>argb</i></code>",
 "<code>#<i>rrggbb</i></code>", or "<code>#<i>aarrggbb</i></code>".
-          @attr name android:row_background
+          @attr name pl.polidea.treeview:row_background
         */
         public static final int TreeViewList_row_background = 7;
         /**
@@ -257,7 +257,7 @@ or to a theme attribute in the form "<code>?[<i>package</i>:][<i>type</i>:]<i>na
 or to a theme attribute in the form "<code>?[<i>package</i>:][<i>type</i>:]<i>name</i></code>".
 <p>May be a color value, in the form of "<code>#<i>rgb</i></code>", "<code>#<i>argb</i></code>",
 "<code>#<i>rrggbb</i></code>", or "<code>#<i>aarrggbb</i></code>".
-          @attr name android:src_collapsed
+          @attr name pl.polidea.treeview:src_collapsed
         */
         public static final int TreeViewList_src_collapsed = 2;
         /**
@@ -269,7 +269,7 @@ or to a theme attribute in the form "<code>?[<i>package</i>:][<i>type</i>:]<i>na
 or to a theme attribute in the form "<code>?[<i>package</i>:][<i>type</i>:]<i>name</i></code>".
 <p>May be a color value, in the form of "<code>#<i>rgb</i></code>", "<code>#<i>argb</i></code>",
 "<code>#<i>rrggbb</i></code>", or "<code>#<i>aarrggbb</i></code>".
-          @attr name android:src_expanded
+          @attr name pl.polidea.treeview:src_expanded
         */
         public static final int TreeViewList_src_expanded = 1;
     };

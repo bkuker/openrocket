@@ -75,7 +75,7 @@ public class InnerTubeConfig extends ThicknessRingComponentConfig {
 		
 		panel.add(subPanel);
 		
-
+		
 		subPanel = new JPanel(new MigLayout("gap rel unrel", "[][65lp::][30lp::]"));
 		
 		// Tube separation scale
@@ -117,8 +117,8 @@ public class InnerTubeConfig extends ThicknessRingComponentConfig {
 		bs.setToolTipText(trans.get("InnerTubeCfg.lbl.ttip.Rotation"));
 		subPanel.add(bs, "w 100lp, wrap para");
 		
-
-
+		
+		
 		// Split button
 		//// Split cluster
 		JButton split = new JButton(trans.get("InnerTubeCfg.but.Splitcluster"));
@@ -150,7 +150,7 @@ public class InnerTubeConfig extends ThicknessRingComponentConfig {
 						coords = component.shiftCoordinates(coords);
 						parent.removeChild(index);
 						for (int i = 0; i < coords.length; i++) {
-                            InnerTube copy = makeIndividualClusterComponent(coords[i], component.getName() + " #" + (i + 1), component);
+							InnerTube copy = InnerTube.makeIndividualClusterComponent(coords[i], component.getName() + " #" + (i + 1), component);
 							
 							parent.addChild(copy, index + i);
 						}
@@ -160,7 +160,7 @@ public class InnerTubeConfig extends ThicknessRingComponentConfig {
 		});
 		subPanel.add(split, "spanx, split 2, gapright para, sizegroup buttons, right");
 		
-
+		
 		// Reset button
 		///// Reset settings
 		JButton reset = new JButton(trans.get("InnerTubeCfg.but.Resetsettings"));
@@ -177,30 +177,10 @@ public class InnerTubeConfig extends ThicknessRingComponentConfig {
 		
 		panel.add(subPanel, "grow");
 		
-
+		
 		return panel;
 	}
-
-    /**
-     * For a given coordinate that represents one tube in a cluster, create an instance of that tube.  Must be called
-     * once for each tube in the cluster.
-     *
-     * @param coord        the coordinate of the clustered tube to create
-     * @param splitName    the name of the individual tube
-     * @param theInnerTube the 'parent' from which this tube will be created.
-     *
-     * @return an instance of an inner tube that represents ONE of the clustered tubes in the cluster represented
-     *  by <code>theInnerTube</code>
-     */
-    public static InnerTube makeIndividualClusterComponent(Coordinate coord, String splitName, RocketComponent theInnerTube) {
-        InnerTube copy = (InnerTube) theInnerTube.copy();
-        copy.setClusterConfiguration(ClusterConfiguration.SINGLE);
-        copy.setClusterRotation(0.0);
-        copy.setClusterScale(1.0);
-        copy.setRadialShift(coord.y, coord.z);
-        copy.setName(splitName);
-        return copy;
-    }
+	
 }
 
 
@@ -232,7 +212,7 @@ class ClusterSelectionPanel extends JPanel {
 	
 	
 	private class ClusterButton extends JPanel implements StateChangeListener, MouseListener,
-															Resettable {
+			Resettable {
 		private Clusterable component;
 		private ClusterConfiguration config;
 		

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <projectDescription>
-	<name>OpenRocket-android</name>
+	<name>OpenRocket Android</name>
 	<comment></comment>
 	<projects>
 	</projects>
@@ -34,12 +34,7 @@
 		<link>
 			<name>core</name>
 			<type>2</type>
-			<locationURI>WORKSPACE_LOC/OpenRocket/src</locationURI>
-		</link>
-		<link>
-			<name>core-resources</name>
-			<type>2</type>
-			<locationURI>WORKSPACE_LOC/OpenRocket/resources</locationURI>
+			<location>D:/Profiles/Administrator/git/openrocket/core/src</location>
 		</link>
 	</linkedResources>
 </projectDescription>
