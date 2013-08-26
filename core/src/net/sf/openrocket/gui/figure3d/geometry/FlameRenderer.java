@@ -114,6 +114,10 @@
  */
 package net.sf.openrocket.gui.figure3d.geometry;
 
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.nio.ByteBuffer;
+import java.nio.IntBuffer;
 import java.util.Random;
 
 import javax.media.opengl.GL;
@@ -129,6 +133,7 @@ import net.sf.openrocket.util.Color;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.jogamp.common.nio.Buffers;
 import com.jogamp.opengl.util.texture.Texture;
 import com.jogamp.opengl.util.texture.TextureData;
 import com.jogamp.opengl.util.texture.TextureIO;
@@ -155,6 +160,8 @@ public final class FlameRenderer {
 	}
 	
 	static Texture smokeT;
+	static Texture smokeN;
+	static int shaderprogram;
 	
 	private static interface Func {
 		float f(double d);
@@ -170,6 +177,63 @@ public final class FlameRenderer {
 		@Override
 		public float f(final double d) {
 			return val;
+		}
+	}
+	
+	public static void init(GL2 gl) {
+		try {
+			TextureData data = TextureIO.newTextureData(GLProfile.getDefault(), FlameRenderer.class.getResourceAsStream("smoke2.png"), GL.GL_RGBA, GL.GL_RGBA, true, null);
+			smokeT = TextureIO.newTexture(data);
+			data = TextureIO.newTextureData(GLProfile.getDefault(), FlameRenderer.class.getResourceAsStream("normal.png"), GL.GL_RGBA, GL.GL_RGBA, true, null);
+			smokeN = TextureIO.newTexture(data);
+			
+			String line;
+			shaderprogram = gl.glCreateProgram();
+			
+			/*int v = gl.glCreateShader(GL2.GL_FRAGMENT_SHADER);
+			BufferedReader brv = new BufferedReader(new InputStreamReader(FlameRenderer.class.getResourceAsStream("smokeVertex.glsl")));
+			String vsrc = "";
+			while ((line = brv.readLine()) != null) {
+				vsrc += line + "\n";
+			}
+			gl.glShaderSource(v, 1, new String[] { vsrc }, (int[]) null, 0);
+			gl.glAttachShader(shaderprogram, v);
+			gl.glCompileShader(v);*/
+			
+			int f = gl.glCreateShader(GL2.GL_FRAGMENT_SHADER);
+			BufferedReader brf = new BufferedReader(new InputStreamReader(FlameRenderer.class.getResourceAsStream("smokeShader.glsl")));
+			String fsrc = "";
+			while ((line = brf.readLine()) != null) {
+				fsrc += line + "\n";
+			}
+			gl.glShaderSource(f, 1, new String[] { fsrc }, (int[]) null, 0);
+			gl.glCompileShader(f);
+			
+			int statusFragmentShader[] = new int[1];
+			gl.glGetShaderiv(f, GL2.GL_COMPILE_STATUS, IntBuffer.wrap(statusFragmentShader));
+			if (statusFragmentShader[0] == GL2.GL_FALSE)
+			{
+				int infoLogLenght[] = new int[1];
+				gl.glGetShaderiv(f, GL2.GL_INFO_LOG_LENGTH, IntBuffer.wrap(infoLogLenght));
+				ByteBuffer infoLog = Buffers.newDirectByteBuffer(infoLogLenght[0]);
+				gl.glGetShaderInfoLog(f, infoLogLenght[0], null, infoLog);
+				byte[] infoBytes = new byte[infoLogLenght[0]];
+				infoLog.get(infoBytes);
+				String out = new String(infoBytes);
+				System.err.println("Fragment shader error:\n" + out);
+			}
+			
+			gl.glAttachShader(shaderprogram, f);
+			
+			
+			
+			
+			gl.glLinkProgram(shaderprogram);
+			gl.glValidateProgram(shaderprogram);
+			
+			
+		} catch (Exception e1) {
+			e1.printStackTrace();
 		}
 	}
 	
@@ -262,15 +326,17 @@ public final class FlameRenderer {
 		}
 	}
 	
-	public static void f(GL2 gl, boolean flame, boolean smoke, Color smokeColor, Color flameColor, Motor m) {
-		if (smokeT == null) {
-			try {
-				TextureData data = TextureIO.newTextureData(GLProfile.getDefault(), FlameRenderer.class.getResourceAsStream("smoke2.png"), GL.GL_RGBA, GL.GL_RGBA, true, null);
-				smokeT = TextureIO.newTexture(data);
-			} catch (Exception e1) {
-				e1.printStackTrace();
-			}
+	public static void setUniform1i(GL2 inGL, int inProgramID, String inName, int inValue) {
+		int tUniformLocation = inGL.glGetUniformLocation(inProgramID, inName);
+		if (tUniformLocation != -1) {
+			inGL.glUniform1i(tUniformLocation, inValue);
+		} else {
+			log.warn("UNIFORM COULD NOT BE FOUND! NAME={}", inName);
 		}
+	}
+	
+	public static void f(GL2 gl, boolean flame, boolean smoke, Color smokeColor, Color flameColor, Motor m) {
+		
 		
 		gl.glRotated(90, 0, 1, 0);
 		gl.glTranslated(0, 0, 0);
@@ -287,8 +353,8 @@ public final class FlameRenderer {
 		gl.glTexEnvi(GL2.GL_TEXTURE_ENV, GL2.GL_TEXTURE_ENV_MODE, GL2.GL_MODULATE);
 		gl.glDepthMask(false);
 		
-		
-		smokeT.enable(gl);
+		gl.glActiveTexture(GL.GL_TEXTURE0);
+		//smokeT.enable(gl);
 		smokeT.bind(gl);
 		
 		if (smoke) {
@@ -311,7 +377,27 @@ public final class FlameRenderer {
 			};
 			
 			gl.glBlendFunc(GL.GL_SRC_ALPHA, GL.GL_ONE_MINUS_SRC_ALPHA);
+			
+			gl.glActiveTexture(GL.GL_TEXTURE1);
+			//smokeN.enable(gl);
+			smokeN.bind(gl);
+			
+			
+			
+			
+			gl.glUseProgram(shaderprogram);
+			
+			setUniform1i(gl, shaderprogram, "uSmoke", 0);
+			setUniform1i(gl, shaderprogram, "uNormal", 1);
+			
+			
+			
 			trail(gl, radius, dZ, new Const(0.08f), LEN, P * 2, smokeColor);
+			//trail(gl, radius, dZ, new Const(0.08f), 0.2f, 1, smokeColor);
+			gl.glUseProgram(0);
+			
+			smokeN.disable(gl);
+			gl.glActiveTexture(GL.GL_TEXTURE0);
 		}
 		
 		

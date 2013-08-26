@@ -19,6 +19,7 @@ import java.util.EventObject;
 import java.util.HashSet;
 import java.util.Iterator;
 
+import javax.media.opengl.DebugGL2;
 import javax.media.opengl.GL;
 import javax.media.opengl.GL2;
 import javax.media.opengl.GLAutoDrawable;
@@ -119,7 +120,7 @@ public class PhotoBooth extends JPanel implements GLEventListener {
 		private boolean motionBlurred = false;
 		private boolean flame = false;
 		private Color flameColor = new Color(255, 100, 50);
-		private boolean smoke = false;
+		private boolean smoke = true;
 		private Color smokeColor = new Color(230, 230, 230);
 		
 		public double getRoll() {
@@ -545,7 +546,7 @@ public class PhotoBooth extends JPanel implements GLEventListener {
 		
 		
 		rr.render(drawable, configuration, new HashSet<RocketComponent>());
-		
+		//glu.gluSphere(new GLUquadricImpl(gl, false), .2, 10, 10);
 		
 		String motorID = configuration.getFlightConfigurationID();
 		Iterator<MotorMount> iterator = configuration.motorIterator();
@@ -578,6 +579,7 @@ public class PhotoBooth extends JPanel implements GLEventListener {
 	@Override
 	public void init(final GLAutoDrawable drawable) {
 		log.trace("GL - init()");
+		drawable.setGL(new DebugGL2(drawable.getGL().getGL2()));
 		
 		final GL2 gl = drawable.getGL().getGL2();
 		
@@ -589,7 +591,7 @@ public class PhotoBooth extends JPanel implements GLEventListener {
 		
 		//gl.glDisable(GLLightingFunc.GL_LIGHT1);
 		
-		
+		FlameRenderer.init(gl);
 		
 	}
 	
@@ -831,6 +833,7 @@ public class PhotoBooth extends JPanel implements GLEventListener {
 		ff.setContentPane(pb);
 		ff.setVisible(true);
 		
+		pb.setDoc(doc);
 		while (true) {
 			Thread.sleep(30);
 			//pb.p.setViewAz(pb.p.getViewAz() + 0.01);
