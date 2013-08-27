@@ -185,6 +185,9 @@ public class PhotoConfigPanel extends JPanel {
 		add(new JCheckBox(new BooleanModel(p, "Flame")), "split 2, w 15");
 		add(flameColorButton, "wrap");
 		
+		add(new JLabel("Sparks"));
+		add(new JCheckBox(new BooleanModel(p, "Sparks")), "wrap");
+		
 		add(new JLabel("Speed"));
 		add(new JCheckBox(new BooleanModel(p, "MotionBlurred")), "wrap");
 	}

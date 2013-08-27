@@ -338,7 +338,28 @@ public final class FlameRenderer {
 		}
 	}
 	
-	public static void f(GL2 gl, boolean flame, boolean smoke, Color smokeColor, Color flameColor, Motor motor) {
+	public static void sparks(GL2 gl, Color color) {
+		//Use the same seed every time
+		Random r = new Random(0);
+		
+		float[] c = new float[4];
+		convertColor(color, c);
+		for (int i = 0; i < 3; i++)
+			c[i] = c[i] * .4f + .6f;
+		gl.glColor4fv(c, 0);
+		
+		for (int i = 0; i < 200; i++) {
+			final float z = 2 * (r.nextFloat() * r.nextFloat() * r.nextFloat());
+			final float x = z * (r.nextFloat() - 0.5f);
+			final float y = z * (r.nextFloat() - 0.5f);
+			gl.glBegin(GL.GL_POINTS);
+			gl.glPointSize(100);
+			gl.glVertex3f(x, y, z * 2);
+			gl.glEnd();
+		}
+	}
+	
+	public static void f(GL2 gl, boolean flame, boolean smoke, boolean sparks, Color smokeColor, Color flameColor, Motor motor) {
 		
 		final float s = (float) Math.max(.5, Math.sqrt(motor.getAverageThrustEstimate()) / 4.0);
 		gl.glScalef(s, s, s);
@@ -347,6 +368,11 @@ public final class FlameRenderer {
 		gl.glTranslated(0, 0, 0);
 		
 		gl.glDisable(GLLightingFunc.GL_LIGHTING);
+		
+		if (sparks) {
+			sparks(gl, flameColor);
+		}
+		
 		gl.glEnable(GL.GL_BLEND);
 		
 		gl.glTexEnvi(GL2.GL_TEXTURE_ENV, GL2.GL_TEXTURE_ENV_MODE, GL2.GL_MODULATE);
@@ -430,7 +456,7 @@ public final class FlameRenderer {
 			
 			flameT.disable(gl);
 		}
-		;
+		
 		gl.glEnable(GLLightingFunc.GL_LIGHTING);
 		gl.glDepthMask(true);
 		

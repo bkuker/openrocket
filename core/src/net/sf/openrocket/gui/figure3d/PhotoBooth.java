@@ -122,6 +122,7 @@ public class PhotoBooth extends JPanel implements GLEventListener {
 		private Color flameColor = new Color(255, 100, 50);
 		private boolean smoke = true;
 		private Color smokeColor = new Color(230, 230, 230);
+		private boolean sparks = false;
 		
 		public double getRoll() {
 			return roll;
@@ -291,6 +292,15 @@ public class PhotoBooth extends JPanel implements GLEventListener {
 		
 		public void setSmokeColor(Color smokeColor) {
 			this.smokeColor = smokeColor;
+			fireChangeEvent();
+		}
+		
+		public boolean isSparks() {
+			return sparks;
+		}
+		
+		public void setSparks(boolean sparks) {
+			this.sparks = sparks;
 			fireChangeEvent();
 		}
 	}
@@ -561,7 +571,7 @@ public class PhotoBooth extends JPanel implements GLEventListener {
 			for (int i = 0; i < position.length; i++) {
 				gl.glPushMatrix();
 				gl.glTranslated(position[i].x + motor.getLength(), position[i].y, position[i].z);
-				FlameRenderer.f(gl, p.isFlame(), p.isSmoke(), p.getSmokeColor(), p.getFlameColor(), motor);
+				FlameRenderer.f(gl, p.isFlame(), p.isSmoke(), p.isSparks(), p.getSmokeColor(), p.getFlameColor(), motor);
 				gl.glPopMatrix();
 			}
 		}
