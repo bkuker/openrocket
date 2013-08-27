@@ -311,7 +311,7 @@ public class PhotoBooth extends JPanel implements GLEventListener {
 		});
 	}
 	
-	public PhotoBooth(final OpenRocketDocument doc) {
+	public PhotoBooth() {
 		
 		this.setLayout(new BorderLayout());
 		
@@ -336,7 +336,7 @@ public class PhotoBooth extends JPanel implements GLEventListener {
 		
 		this.add(new PhotoConfigPanel(p), BorderLayout.EAST);
 		
-		setDoc(doc);
+		
 	}
 	
 	/**
@@ -816,27 +816,26 @@ public class PhotoBooth extends JPanel implements GLEventListener {
 		
 		Databases.fakeMethod();
 		
-		//String f = "C:\\Users\\bkuker\\git\\openrocket\\core\\resources\\datafiles\\examples\\Simulation Listeners.ork";
-		//String f = "C:\\Users\\bkuker\\git\\openrocket\\core\\resources\\datafiles\\examples\\High Power Airstart.ork";
-		String f = "C:\\Users\\bkuker\\git\\openrocket\\core\\resources\\datafiles\\examples\\A simple model rocket.ork";
-		//String f = "C:\\Users\\bkuker\\git\\openrocket\\core\\resources\\datafiles\\examples\\Clustered rocket design.ork";
-		//String f = "C:\\Users\\bkuker\\git\\openrocket\\core\\resources\\datafiles\\examples\\Boosted Dart.ork";
-		GeneralRocketLoader grl = new GeneralRocketLoader(new File(f));
-		OpenRocketDocument doc = grl.load();
-		
 		JFrame ff = new JFrame();
 		ff.setSize(1024, 768);
 		ff.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		
-		PhotoBooth pb = new PhotoBooth(doc);
+		PhotoBooth pb = new PhotoBooth();
 		ff.setJMenuBar(pb.getMenu());
 		ff.setContentPane(pb);
 		ff.setVisible(true);
 		
-		pb.setDoc(doc);
-		while (true) {
-			Thread.sleep(30);
-			//pb.p.setViewAz(pb.p.getViewAz() + 0.01);
+		
+		if (true) {
+			Thread.sleep(1);
+			//String f = "C:\\Users\\bkuker\\git\\openrocket\\core\\resources\\datafiles\\examples\\Simulation Listeners.ork";
+			//String f = "C:\\Users\\bkuker\\git\\openrocket\\core\\resources\\datafiles\\examples\\High Power Airstart.ork";
+			String f = "C:\\Users\\bkuker\\git\\openrocket\\core\\resources\\datafiles\\examples\\A simple model rocket.ork";
+			//String f = "C:\\Users\\bkuker\\git\\openrocket\\core\\resources\\datafiles\\examples\\Clustered rocket design.ork";
+			//String f = "C:\\Users\\bkuker\\git\\openrocket\\core\\resources\\datafiles\\examples\\Boosted Dart.ork";
+			GeneralRocketLoader grl = new GeneralRocketLoader(new File(f));
+			OpenRocketDocument doc = grl.load();
+			pb.setDoc(doc);
 		}
 	}
 }

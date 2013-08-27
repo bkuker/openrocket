@@ -159,6 +159,7 @@ public final class FlameRenderer {
 		}
 	}
 	
+	static Texture flameT;
 	static Texture smokeT;
 	static Texture smokeN;
 	static int shaderprogram;
@@ -186,6 +187,8 @@ public final class FlameRenderer {
 			smokeT = TextureIO.newTexture(data);
 			data = TextureIO.newTextureData(GLProfile.getDefault(), FlameRenderer.class.getResourceAsStream("c-normal.png"), GL.GL_RGBA, GL.GL_RGBA, true, null);
 			smokeN = TextureIO.newTexture(data);
+			data = TextureIO.newTextureData(GLProfile.getDefault(), FlameRenderer.class.getResourceAsStream("smoke2.png"), GL.GL_RGBA, GL.GL_RGBA, true, null);
+			flameT = TextureIO.newTexture(data);
 			
 			String line;
 			shaderprogram = gl.glCreateProgram();
@@ -341,21 +344,12 @@ public final class FlameRenderer {
 		gl.glRotated(90, 0, 1, 0);
 		gl.glTranslated(0, 0, 0);
 		
-		//gl.glTexParameterf(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_MAX_ANISOTROPY_EXT, 1.0f);
-		//gl.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_MIN_FILTER, GL.GL_LINEAR);
-		//gl.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_MAG_FILTER, GL.GL_LINEAR);
-		
-		
 		gl.glDisable(GLLightingFunc.GL_LIGHTING);
 		gl.glEnable(GL.GL_BLEND);
-		
 		
 		gl.glTexEnvi(GL2.GL_TEXTURE_ENV, GL2.GL_TEXTURE_ENV_MODE, GL2.GL_MODULATE);
 		gl.glDepthMask(false);
 		
-		gl.glActiveTexture(GL.GL_TEXTURE0);
-		//smokeT.enable(gl);
-		smokeT.bind(gl);
 		
 		if (smoke) {
 			final float LEN = 10;
@@ -378,19 +372,16 @@ public final class FlameRenderer {
 			
 			gl.glBlendFunc(GL.GL_SRC_ALPHA, GL.GL_ONE_MINUS_SRC_ALPHA);
 			
+			gl.glActiveTexture(GL.GL_TEXTURE0);
+			smokeT.bind(gl);
+			
 			gl.glActiveTexture(GL.GL_TEXTURE1);
-			//smokeN.enable(gl);
 			smokeN.bind(gl);
-			
-			
-			
 			
 			gl.glUseProgram(shaderprogram);
 			
 			setUniform1i(gl, shaderprogram, "uSmoke", 0);
 			setUniform1i(gl, shaderprogram, "uNormal", 1);
-			
-			
 			
 			trail(gl, radius, dZ, new Const(0.06f), LEN, P, smokeColor);
 			//trail(gl, radius, dZ, new Const(1), 0.2f, 1, smokeColor);
@@ -403,6 +394,10 @@ public final class FlameRenderer {
 		
 		
 		if (flame) {
+			gl.glActiveTexture(GL.GL_TEXTURE0);
+			flameT.enable(gl);
+			flameT.bind(gl);
+			
 			final float FLEN = 0.3f;
 			final int FP = 6;
 			final Func fr = new Func() {
@@ -422,6 +417,7 @@ public final class FlameRenderer {
 			};
 			
 			final Func alpha = new Func() {
+				@Override
 				public float f(double z) {
 					return 0.2f * (float) Math.pow((1.0f - (float) z / FLEN), 4);
 				};
@@ -429,9 +425,10 @@ public final class FlameRenderer {
 			
 			gl.glBlendFunc(GL.GL_SRC_ALPHA, GL.GL_ONE);
 			trail(gl, fr, fdZ, alpha, FLEN, FP, flameColor);
+			
+			flameT.disable(gl);
 		}
-		
-		smokeT.disable(gl);
+		;
 		gl.glEnable(GLLightingFunc.GL_LIGHTING);
 		gl.glDepthMask(true);
 		
