@@ -242,7 +242,7 @@ public final class FlameRenderer {
 	
 	
 	
-	private static void trail(GL2 gl, Func radius, Func dZ, Func alpha, float LEN, int P, Color color) {
+	private static void trail(GL2 gl, Func radius, Func dZ, Func alpha, float LEN, int P, Color color, float scale) {
 		float[] c = new float[4];
 		convertColor(color, c);
 		
@@ -311,7 +311,7 @@ public final class FlameRenderer {
 				//TODO Add a random rotation to prevent artifacts from texture.
 				
 				gl.glBegin(GL.GL_TRIANGLE_FAN);
-				float d = radius.f(z) * 2;
+				float d = radius.f(z) * scale * 2;
 				gl.glTexCoord2f(0, 0);
 				gl.glVertex3f(-d, -d, 0);
 				gl.glTexCoord2f(0, 1);
@@ -338,8 +338,10 @@ public final class FlameRenderer {
 		}
 	}
 	
-	public static void f(GL2 gl, boolean flame, boolean smoke, Color smokeColor, Color flameColor, Motor m) {
+	public static void f(GL2 gl, boolean flame, boolean smoke, Color smokeColor, Color flameColor, Motor motor) {
 		
+		final float s = (float) Math.max(.5, Math.sqrt(motor.getAverageThrustEstimate()) / 4.0);
+		gl.glScalef(s, s, s);
 		
 		gl.glRotated(90, 0, 1, 0);
 		gl.glTranslated(0, 0, 0);
@@ -383,7 +385,7 @@ public final class FlameRenderer {
 			setUniform1i(gl, shaderprogram, "uSmoke", 0);
 			setUniform1i(gl, shaderprogram, "uNormal", 1);
 			
-			trail(gl, radius, dZ, new Const(0.06f), LEN, P, smokeColor);
+			trail(gl, radius, dZ, new Const(0.06f), LEN, P, smokeColor, s);
 			//trail(gl, radius, dZ, new Const(1), 0.2f, 1, smokeColor);
 			gl.glUseProgram(0);
 			
@@ -424,7 +426,7 @@ public final class FlameRenderer {
 			};
 			
 			gl.glBlendFunc(GL.GL_SRC_ALPHA, GL.GL_ONE);
-			trail(gl, fr, fdZ, alpha, FLEN, FP, flameColor);
+			trail(gl, fr, fdZ, alpha, FLEN, FP, flameColor, s);
 			
 			flameT.disable(gl);
 		}
