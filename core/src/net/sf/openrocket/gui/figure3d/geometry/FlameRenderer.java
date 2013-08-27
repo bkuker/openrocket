@@ -182,9 +182,9 @@ public final class FlameRenderer {
 	
 	public static void init(GL2 gl) {
 		try {
-			TextureData data = TextureIO.newTextureData(GLProfile.getDefault(), FlameRenderer.class.getResourceAsStream("smoke2.png"), GL.GL_RGBA, GL.GL_RGBA, true, null);
+			TextureData data = TextureIO.newTextureData(GLProfile.getDefault(), FlameRenderer.class.getResourceAsStream("c-color.png"), GL.GL_RGBA, GL.GL_RGBA, true, null);
 			smokeT = TextureIO.newTexture(data);
-			data = TextureIO.newTextureData(GLProfile.getDefault(), FlameRenderer.class.getResourceAsStream("normal.png"), GL.GL_RGBA, GL.GL_RGBA, true, null);
+			data = TextureIO.newTextureData(GLProfile.getDefault(), FlameRenderer.class.getResourceAsStream("c-normal.png"), GL.GL_RGBA, GL.GL_RGBA, true, null);
 			smokeN = TextureIO.newTexture(data);
 			
 			String line;
@@ -341,9 +341,9 @@ public final class FlameRenderer {
 		gl.glRotated(90, 0, 1, 0);
 		gl.glTranslated(0, 0, 0);
 		
-		gl.glTexParameterf(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_MAX_ANISOTROPY_EXT, 1.0f);
-		gl.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_MIN_FILTER, GL.GL_LINEAR);
-		gl.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_MAG_FILTER, GL.GL_LINEAR);
+		//gl.glTexParameterf(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_MAX_ANISOTROPY_EXT, 1.0f);
+		//gl.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_MIN_FILTER, GL.GL_LINEAR);
+		//gl.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_MAG_FILTER, GL.GL_LINEAR);
 		
 		
 		gl.glDisable(GLLightingFunc.GL_LIGHTING);
@@ -360,7 +360,7 @@ public final class FlameRenderer {
 		if (smoke) {
 			final float LEN = 10;
 			final float MAX_R = .15f;
-			final int P = 10;
+			final int P = 5;
 			
 			final Func radius = new Func() {
 				@Override
@@ -392,8 +392,8 @@ public final class FlameRenderer {
 			
 			
 			
-			trail(gl, radius, dZ, new Const(0.08f), LEN, P * 2, smokeColor);
-			//trail(gl, radius, dZ, new Const(0.08f), 0.2f, 1, smokeColor);
+			trail(gl, radius, dZ, new Const(0.06f), LEN, P, smokeColor);
+			//trail(gl, radius, dZ, new Const(1), 0.2f, 1, smokeColor);
 			gl.glUseProgram(0);
 			
 			smokeN.disable(gl);

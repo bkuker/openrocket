@@ -8,7 +8,10 @@ void main(void)
 	
 	float  lamberFactor = max (dot (gl_LightSource[1].position, normal), 0.0) ;
 	
+	lamberFactor = lamberFactor * .6 + .4;
+	
 	vec4 diffuseMaterial = texture2D (uSmoke, gl_TexCoord[0].st);
+	diffuseMaterial.rgb = 1;
 	
 	vec4 diffuseLight = gl_LightSource[1].diffuse;
 	vec4 ambientLight = gl_LightSource[1].ambient;
