@@ -345,7 +345,7 @@ public final class FlameRenderer {
 		float[] c = new float[4];
 		convertColor(color, c);
 		for (int i = 0; i < 3; i++)
-			c[i] = c[i] * .4f + .6f;
+			c[i] = c[i] * .3f + .7f;
 		gl.glColor4fv(c, 0);
 		
 		for (int i = 0; i < 200; i++) {
@@ -353,15 +353,15 @@ public final class FlameRenderer {
 			final float x = z * (r.nextFloat() - 0.5f);
 			final float y = z * (r.nextFloat() - 0.5f);
 			gl.glBegin(GL.GL_POINTS);
-			gl.glPointSize(100);
+			gl.glPointSize(1);
 			gl.glVertex3f(x, y, z * 2);
 			gl.glEnd();
 		}
 	}
 	
-	public static void f(GL2 gl, boolean flame, boolean smoke, boolean sparks, Color smokeColor, Color flameColor, Motor motor) {
+	public static void f(GL2 gl, boolean flame, boolean smoke, boolean sparks, Color smokeColor, Color flameColor, Motor motor, float scale) {
 		
-		final float s = (float) Math.max(.5, Math.sqrt(motor.getAverageThrustEstimate()) / 4.0);
+		final float s = (float) Math.max(.5, Math.sqrt(motor.getAverageThrustEstimate()) / 4.0) * scale;
 		gl.glScalef(s, s, s);
 		
 		gl.glRotated(90, 0, 1, 0);
@@ -411,7 +411,7 @@ public final class FlameRenderer {
 			setUniform1i(gl, shaderprogram, "uSmoke", 0);
 			setUniform1i(gl, shaderprogram, "uNormal", 1);
 			
-			trail(gl, radius, dZ, new Const(0.06f), LEN, P, smokeColor, s);
+			trail(gl, radius, dZ, new Const(0.1f * (smokeColor.getAlpha() / 255f)), LEN, P, smokeColor, s);
 			//trail(gl, radius, dZ, new Const(1), 0.2f, 1, smokeColor);
 			gl.glUseProgram(0);
 			

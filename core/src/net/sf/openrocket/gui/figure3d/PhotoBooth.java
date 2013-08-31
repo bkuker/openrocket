@@ -119,8 +119,9 @@ public class PhotoBooth extends JPanel implements GLEventListener {
 		private boolean flame = false;
 		private Color flameColor = new Color(255, 100, 50);
 		private boolean smoke = true;
-		private Color smokeColor = new Color(230, 230, 230);
+		private Color smokeColor = new Color(230, 230, 230, 204);
 		private boolean sparks = false;
+		private double exhaustScale = 1.0;
 		
 		public double getRoll() {
 			return roll;
@@ -289,7 +290,17 @@ public class PhotoBooth extends JPanel implements GLEventListener {
 		}
 		
 		public void setSmokeColor(Color smokeColor) {
+			smokeColor.setAlpha(this.smokeColor.getAlpha());
 			this.smokeColor = smokeColor;
+			fireChangeEvent();
+		}
+		
+		public double getSmokeAlpha() {
+			return smokeColor.getAlpha() / 255f;
+		}
+		
+		public void setSmokeAlpha(double alpha) {
+			smokeColor.setAlpha((int) (alpha * 255));
 			fireChangeEvent();
 		}
 		
@@ -299,6 +310,15 @@ public class PhotoBooth extends JPanel implements GLEventListener {
 		
 		public void setSparks(boolean sparks) {
 			this.sparks = sparks;
+			fireChangeEvent();
+		}
+		
+		public double getExhaustScale() {
+			return exhaustScale;
+		}
+		
+		public void setExhaustScale(double exhaustScale) {
+			this.exhaustScale = exhaustScale;
 			fireChangeEvent();
 		}
 	}
@@ -553,7 +573,7 @@ public class PhotoBooth extends JPanel implements GLEventListener {
 			for (int i = 0; i < position.length; i++) {
 				gl.glPushMatrix();
 				gl.glTranslated(position[i].x + motor.getLength(), position[i].y, position[i].z);
-				FlameRenderer.f(gl, p.isFlame(), p.isSmoke(), p.isSparks(), p.getSmokeColor(), p.getFlameColor(), motor);
+				FlameRenderer.f(gl, p.isFlame(), p.isSmoke(), p.isSparks(), p.getSmokeColor(), p.getFlameColor(), motor, (float) p.getExhaustScale());
 				gl.glPopMatrix();
 			}
 		}
@@ -675,7 +695,7 @@ public class PhotoBooth extends JPanel implements GLEventListener {
 	
 	private void copy(final GLAutoDrawable drawable) {
 		
-		final BufferedImage image = (new AWTGLReadBufferUtil(GLProfile.get(GLProfile.GL2), true))
+		final BufferedImage image = (new AWTGLReadBufferUtil(GLProfile.get(GLProfile.GL2), false))
 				.readPixelsToBufferedImage(drawable.getGL(), 0, 0, drawable.getWidth(), drawable.getHeight(), true);
 		
 		

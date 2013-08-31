@@ -165,7 +165,7 @@ public class PhotoConfigPanel extends JPanel {
 		add(new JLabel("Light Altitude"));
 		DoubleModel lightAltModle = new DoubleModel(p, "LightAlt", UnitGroup.UNITS_ANGLE);
 		add(new JSpinner(lightAltModle.getSpinnerModel()), "w 40");
-		add(new UnitSelector(lightAltModle), "wrap");
+		
 		
 		add(new StyledLabel("Sky", Style.BOLD), "wrap");
 		
@@ -175,11 +175,16 @@ public class PhotoConfigPanel extends JPanel {
 		add(new JLabel("Sky Image"));
 		add(new JCheckBox(new BooleanModel(p, "SkyEnabled")), "wrap");
 		
-		add(new StyledLabel("Effects", Style.BOLD), "wrap");
+		
+		add(new StyledLabel("Exhaust", Style.BOLD), "wrap");
 		
 		add(new JLabel("Smoke"));
 		add(new JCheckBox(new BooleanModel(p, "Smoke")), "split 2, w 15");
 		add(smokeColorButton, "wrap");
+		
+		add(new JLabel("Opacity"));
+		DoubleModel smokeAlphaModel = new DoubleModel(p, "SmokeAlpha", 100, UnitGroup.UNITS_NONE, 0, 100);
+		add(new JSpinner(smokeAlphaModel.getSpinnerModel()), "wrap");
 		
 		add(new JLabel("Fire"));
 		add(new JCheckBox(new BooleanModel(p, "Flame")), "split 2, w 15");
@@ -187,6 +192,13 @@ public class PhotoConfigPanel extends JPanel {
 		
 		add(new JLabel("Sparks"));
 		add(new JCheckBox(new BooleanModel(p, "Sparks")), "wrap");
+		
+		add(new JLabel("Scale"));
+		DoubleModel exhaustScaleModel = new DoubleModel(p, "ExhaustScale", 100, UnitGroup.UNITS_NONE, 0, 1000);
+		add(new JSpinner(exhaustScaleModel.getSpinnerModel()), "wrap");
+		
+		
+		add(new StyledLabel("Effects", Style.BOLD), "wrap");
 		
 		add(new JLabel("Speed"));
 		add(new JCheckBox(new BooleanModel(p, "MotionBlurred")), "wrap");
