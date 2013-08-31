@@ -43,7 +43,6 @@ import javax.swing.KeyStroke;
 import javax.swing.SwingUtilities;
 import javax.swing.event.MouseInputAdapter;
 
-import net.sf.openrocket.communication.UpdateInfoRetriever;
 import net.sf.openrocket.database.Databases;
 import net.sf.openrocket.document.OpenRocketDocument;
 import net.sf.openrocket.file.GeneralRocketLoader;
@@ -321,20 +320,16 @@ public class PhotoBooth extends JPanel implements GLEventListener {
 	}
 	
 	public PhotoBooth() {
-		
 		this.setLayout(new BorderLayout());
 		
 		p = new Photo();
 		
-		//Only initizlize GL if 3d is enabled.
-		if (is3dEnabled()) {
-			//Fixes a linux / X bug: Splash must be closed before GL Init
-			SplashScreen splash = Splash.getSplashScreen();
-			if (splash != null && splash.isVisible())
-				splash.close();
-			
-			initGLCanvas();
-		}
+		//Fixes a linux / X bug: Splash must be closed before GL Init
+		SplashScreen splash = Splash.getSplashScreen();
+		if (splash != null && splash.isVisible())
+			splash.close();
+		
+		initGLCanvas();
 		
 		p.addChangeListener(new StateChangeListener() {
 			@Override
@@ -344,21 +339,9 @@ public class PhotoBooth extends JPanel implements GLEventListener {
 		});
 		
 		this.add(new PhotoConfigPanel(p), BorderLayout.EAST);
-		
-		
-	}
-	
-	/**
-	 * Return true if 3d view is enabled. This may be toggled by the user at
-	 * launch time.
-	 * @return
-	 */
-	public static boolean is3dEnabled() {
-		return System.getProperty("openrocket.3d.disable") == null;
 	}
 	
 	private void initGLCanvas() {
-		log.debug("Initializing RocketFigure3D OpenGL Canvas");
 		try {
 			log.debug("Setting up GL capabilities...");
 			
@@ -808,17 +791,6 @@ public class PhotoBooth extends JPanel implements GLEventListener {
 		Application.setInjector(injector);
 		
 		guiModule.startLoader();
-		
-		// Start update info fetching
-		final UpdateInfoRetriever updateInfo;
-		if (Application.getPreferences().getCheckUpdates()) {
-			log.info("Starting update check");
-			updateInfo = new UpdateInfoRetriever();
-			updateInfo.start();
-		} else {
-			log.info("Update check disabled");
-			updateInfo = null;
-		}
 		
 		// Set the best available look-and-feel
 		log.info("Setting best LAF");
