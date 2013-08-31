@@ -19,7 +19,6 @@ import java.util.EventObject;
 import java.util.HashSet;
 import java.util.Iterator;
 
-import javax.media.opengl.DebugGL2;
 import javax.media.opengl.GL;
 import javax.media.opengl.GL2;
 import javax.media.opengl.GLAutoDrawable;
@@ -77,7 +76,7 @@ import org.slf4j.LoggerFactory;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Module;
-import com.jogamp.opengl.util.awt.Screenshot;
+import com.jogamp.opengl.util.awt.AWTGLReadBufferUtil;
 
 public class PhotoBooth extends JPanel implements GLEventListener {
 	private static final long serialVersionUID = 1L;
@@ -589,7 +588,7 @@ public class PhotoBooth extends JPanel implements GLEventListener {
 	@Override
 	public void init(final GLAutoDrawable drawable) {
 		log.trace("GL - init()");
-		drawable.setGL(new DebugGL2(drawable.getGL().getGL2()));
+		//drawable.setGL(new DebugGL2(drawable.getGL().getGL2()));
 		
 		final GL2 gl = drawable.getGL().getGL2();
 		
@@ -692,7 +691,11 @@ public class PhotoBooth extends JPanel implements GLEventListener {
 	}
 	
 	private void copy(final GLAutoDrawable drawable) {
-		final BufferedImage image = Screenshot.readToBufferedImage(drawable.getWidth(), drawable.getHeight());
+		
+		final BufferedImage image = (new AWTGLReadBufferUtil(GLProfile.get(GLProfile.GL2), true))
+				.readPixelsToBufferedImage(drawable.getGL(), 0, 0, drawable.getWidth(), drawable.getHeight(), true);
+		
+		
 		Toolkit.getDefaultToolkit().getSystemClipboard().setContents(new Transferable() {
 			@Override
 			public Object getTransferData(DataFlavor flavor)
