@@ -1,5 +1,6 @@
 package net.sf.openrocket.gui.figure3d.photo;
 
+import java.awt.Dimension;
 import java.awt.FileDialog;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
@@ -52,12 +53,20 @@ public class PhotoApp extends JFrame {
 		photoPanel = new PhotoPanel();
 		setJMenuBar(getMenu());
 		setContentPane(photoPanel);
+		
+		GUIUtil.rememberWindowSize(this);
+		this.setLocationByPlatform(true);
+		GUIUtil.setWindowIcons(this);
+		
+		setTitle("OpenRocket - Photo App");
+		
 		setVisible(true);
 		
 		settings = new JDialog(this, "Settings") {
 			{
-				setSize(320, 240);
 				setContentPane(new PhotoSettingsConfig(photoPanel.getSettings()));
+				pack();
+				this.setLocationByPlatform(true);
 				setVisible(true);
 			}
 		};
@@ -129,7 +138,46 @@ public class PhotoApp extends JFrame {
 			}
 		}));
 		
+		//Window
+		menu = new JMenu("Window");
+		menubar.add(menu);
+		JMenu sizeMenu = new JMenu("Size");
+		menu.add(sizeMenu);
+		
+		sizeMenu.add(new JMenuItem(new SizeAction(320, 240, "QVGA")));
+		sizeMenu.add(new JMenuItem(new SizeAction(640, 480, "VGA")));
+		sizeMenu.add(new JMenuItem(new SizeAction(1024, 768, "XGA")));
+		
+		sizeMenu.addSeparator();
+		
+		sizeMenu.add(new JMenuItem(new SizeAction(240, 320, "QVGA Portrait")));
+		sizeMenu.add(new JMenuItem(new SizeAction(480, 640, "VGA Portrait")));
+		sizeMenu.add(new JMenuItem(new SizeAction(768, 1024, "XGA Portrait")));
+		
+		sizeMenu.addSeparator();
+		
+		sizeMenu.add(new JMenuItem(new SizeAction(854, 480, "420p")));
+		sizeMenu.add(new JMenuItem(new SizeAction(1280, 720, "720p")));
+		sizeMenu.add(new JMenuItem(new SizeAction(1920, 1080, "1080p")));
+		
 		return menubar;
+	}
+	
+	private class SizeAction extends AbstractAction {
+		private final int w, h;
+		
+		SizeAction(final int w, final int h, final String n) {
+			super(w + " x " + h + " (" + n + ")");
+			this.w = w;
+			this.h = h;
+		}
+		
+		@Override
+		public void actionPerformed(ActionEvent e) {
+			photoPanel.setPreferredSize(new Dimension(w, h));
+			PhotoApp.this.pack();
+		}
+		
 	}
 	
 	

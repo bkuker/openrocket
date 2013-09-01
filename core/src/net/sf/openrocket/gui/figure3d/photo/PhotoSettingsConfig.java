@@ -13,13 +13,17 @@ import javax.swing.JColorChooser;
 import javax.swing.JDialog;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.JSeparator;
 import javax.swing.JSpinner;
 import javax.swing.JTabbedPane;
+import javax.swing.SwingConstants;
 
 import net.miginfocom.swing.MigLayout;
 import net.sf.openrocket.gui.adaptors.BooleanModel;
 import net.sf.openrocket.gui.adaptors.DoubleModel;
 import net.sf.openrocket.gui.components.ColorIcon;
+import net.sf.openrocket.gui.components.StyledLabel;
+import net.sf.openrocket.gui.components.StyledLabel.Style;
 import net.sf.openrocket.gui.components.UnitSelector;
 import net.sf.openrocket.gui.util.ColorConversion;
 import net.sf.openrocket.startup.Application;
@@ -70,6 +74,8 @@ public class PhotoSettingsConfig extends JTabbedPane {
 	public PhotoSettingsConfig(final PhotoSettings p) {
 		super();
 		
+		setPreferredSize(new Dimension(240, 320));
+		
 		final JButton sunLightColorButton = new JButton();
 		sunLightColorButton.setMaximumSize(new Dimension(35, 25));
 		
@@ -102,8 +108,11 @@ public class PhotoSettingsConfig extends JTabbedPane {
 		
 		
 		
-		addTab("Rocket", new JPanel(new MigLayout("fill")) {
+		addTab("Orientation", new JPanel(new MigLayout("fill")) {
 			{
+				add(new StyledLabel("Rocket", Style.BOLD));
+				add(new JSeparator(SwingConstants.HORIZONTAL), "span, wrap, growx");
+				
 				add(new JLabel("Pitch"));
 				DoubleModel pitchModel = new DoubleModel(p, "Pitch", UnitGroup.UNITS_ANGLE);
 				add(new JSpinner(pitchModel.getSpinnerModel()), "w 40");
@@ -124,14 +133,8 @@ public class PhotoSettingsConfig extends JTabbedPane {
 				add(new JSpinner(advanceModel.getSpinnerModel()), "w 40");
 				add(new UnitSelector(advanceModel), "wrap");
 				
-			}
-		});
-		
-		
-		
-		
-		addTab("Camera", new JPanel(new MigLayout("fill")) {
-			{
+				add(new StyledLabel("Camera", Style.BOLD));
+				add(new JSeparator(SwingConstants.HORIZONTAL), "span, wrap, growx");
 				
 				add(new JLabel("View Azimuth"));
 				DoubleModel viewAzModel = new DoubleModel(p, "ViewAz", UnitGroup.UNITS_ANGLE);
@@ -155,8 +158,11 @@ public class PhotoSettingsConfig extends JTabbedPane {
 			}
 		});
 		
-		addTab("Light", new JPanel(new MigLayout("fill")) {
+		addTab("Environment", new JPanel(new MigLayout("fill")) {
 			{
+				add(new StyledLabel("Light", Style.BOLD));
+				add(new JSeparator(SwingConstants.HORIZONTAL), "span, wrap, growx");
+				
 				add(new JLabel("Sun Light"));
 				add(sunLightColorButton, "wrap");
 				
@@ -171,13 +177,10 @@ public class PhotoSettingsConfig extends JTabbedPane {
 				
 				add(new JLabel("Light Altitude"));
 				DoubleModel lightAltModle = new DoubleModel(p, "LightAlt", UnitGroup.UNITS_ANGLE);
-				add(new JSpinner(lightAltModle.getSpinnerModel()), "w 40");
+				add(new JSpinner(lightAltModle.getSpinnerModel()), "wrap");
 				
-			}
-		});
-		
-		addTab("Sky", new JPanel(new MigLayout("fill")) {
-			{
+				add(new StyledLabel("Sky", Style.BOLD));
+				add(new JSeparator(SwingConstants.HORIZONTAL), "span, wrap, growx");
 				
 				add(new JLabel("Sky Color"));
 				add(skyColorButton, "wrap");
@@ -187,8 +190,11 @@ public class PhotoSettingsConfig extends JTabbedPane {
 			}
 		});
 		
-		addTab("Exhaust", new JPanel(new MigLayout("fill")) {
+		addTab("Effects", new JPanel(new MigLayout("fill")) {
 			{
+				add(new StyledLabel("Smoke & Flame", Style.BOLD));
+				add(new JSeparator(SwingConstants.HORIZONTAL), "span, wrap, growx");
+				
 				add(new JLabel("Smoke"));
 				add(new JCheckBox(new BooleanModel(p, "Smoke")), "split 2, w 15");
 				add(smokeColorButton, "wrap");
@@ -207,11 +213,10 @@ public class PhotoSettingsConfig extends JTabbedPane {
 				add(new JLabel("Scale"));
 				DoubleModel exhaustScaleModel = new DoubleModel(p, "ExhaustScale", 100, UnitGroup.UNITS_NONE, 0, 1000);
 				add(new JSpinner(exhaustScaleModel.getSpinnerModel()), "wrap");
-			}
-		});
-		
-		addTab("Effects", new JPanel(new MigLayout("fill")) {
-			{
+				
+				add(new StyledLabel("Effects", Style.BOLD));
+				add(new JSeparator(SwingConstants.HORIZONTAL), "span, wrap, growx");
+				
 				add(new JLabel("Speed"));
 				add(new JCheckBox(new BooleanModel(p, "MotionBlurred")), "wrap");
 			}
