@@ -112,7 +112,7 @@
  * in the design, construction, operation or maintenance of any nuclear
  * facility.
  */
-package net.sf.openrocket.gui.figure3d.geometry;
+package net.sf.openrocket.gui.figure3d.photo.exhaust;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;

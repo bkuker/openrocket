@@ -1,4 +1,4 @@
-package net.sf.openrocket.gui.figure3d;
+package net.sf.openrocket.gui.figure3d.photo;
 
 import java.awt.BorderLayout;
 import java.awt.FileDialog;
@@ -47,8 +47,11 @@ import net.sf.openrocket.database.Databases;
 import net.sf.openrocket.document.OpenRocketDocument;
 import net.sf.openrocket.file.GeneralRocketLoader;
 import net.sf.openrocket.file.RocketLoadException;
-import net.sf.openrocket.gui.figure3d.geometry.FlameRenderer;
-import net.sf.openrocket.gui.figure3d.sky.SkyBox;
+import net.sf.openrocket.gui.figure3d.RealisticRenderer;
+import net.sf.openrocket.gui.figure3d.RocketRenderer;
+import net.sf.openrocket.gui.figure3d.TextureCache;
+import net.sf.openrocket.gui.figure3d.photo.exhaust.FlameRenderer;
+import net.sf.openrocket.gui.figure3d.photo.sky.SkyBox;
 import net.sf.openrocket.gui.main.Splash;
 import net.sf.openrocket.gui.main.SwingExceptionHandler;
 import net.sf.openrocket.gui.util.GUIUtil;
