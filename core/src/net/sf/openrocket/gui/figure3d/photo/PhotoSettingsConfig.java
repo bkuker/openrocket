@@ -26,7 +26,7 @@ import net.sf.openrocket.startup.Application;
 import net.sf.openrocket.unit.UnitGroup;
 import net.sf.openrocket.util.StateChangeListener;
 
-public class PhotoConfigPanel extends JTabbedPane {
+public class PhotoSettingsConfig extends JTabbedPane {
 	private static final JColorChooser colorChooser = new JColorChooser();
 	
 	private class ColorActionListener implements ActionListener {
@@ -46,7 +46,7 @@ public class PhotoConfigPanel extends JTabbedPane {
 				net.sf.openrocket.util.Color c = (net.sf.openrocket.util.Color) getMethod.invoke(o);
 				Color awtColor = ColorConversion.toAwtColor(c);
 				colorChooser.setColor(awtColor);
-				JDialog d = JColorChooser.createDialog(PhotoConfigPanel.this,
+				JDialog d = JColorChooser.createDialog(PhotoSettingsConfig.this,
 						"Color Chooser", true, colorChooser, new ActionListener() {
 							@Override
 							public void actionPerformed(ActionEvent okEvent) {
@@ -67,7 +67,7 @@ public class PhotoConfigPanel extends JTabbedPane {
 		}
 	}
 	
-	public PhotoConfigPanel(final PhotoBooth.Photo p) {
+	public PhotoSettingsConfig(final PhotoSettings p) {
 		super();
 		
 		final JButton sunLightColorButton = new JButton();
