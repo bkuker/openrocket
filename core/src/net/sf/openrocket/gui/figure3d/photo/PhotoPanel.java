@@ -1,18 +1,12 @@
 package net.sf.openrocket.gui.figure3d.photo;
 
 import java.awt.BorderLayout;
-import java.awt.FileDialog;
 import java.awt.SplashScreen;
 import java.awt.Toolkit;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
 import java.awt.datatransfer.UnsupportedFlavorException;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.KeyEvent;
-import java.awt.event.MouseEvent;
 import java.awt.image.BufferedImage;
-import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.EventObject;
@@ -30,42 +24,21 @@ import javax.media.opengl.awt.GLCanvas;
 import javax.media.opengl.fixedfunc.GLLightingFunc;
 import javax.media.opengl.fixedfunc.GLMatrixFunc;
 import javax.media.opengl.glu.GLU;
-import javax.swing.AbstractAction;
-import javax.swing.Action;
-import javax.swing.JFrame;
 import javax.swing.JLabel;
-import javax.swing.JMenu;
-import javax.swing.JMenuBar;
-import javax.swing.JMenuItem;
 import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
-import javax.swing.KeyStroke;
-import javax.swing.SwingUtilities;
-import javax.swing.event.MouseInputAdapter;
 
-import net.sf.openrocket.database.Databases;
 import net.sf.openrocket.document.OpenRocketDocument;
-import net.sf.openrocket.file.GeneralRocketLoader;
-import net.sf.openrocket.file.RocketLoadException;
 import net.sf.openrocket.gui.figure3d.RealisticRenderer;
 import net.sf.openrocket.gui.figure3d.RocketRenderer;
 import net.sf.openrocket.gui.figure3d.TextureCache;
 import net.sf.openrocket.gui.figure3d.photo.exhaust.FlameRenderer;
 import net.sf.openrocket.gui.figure3d.photo.sky.SkyBox;
 import net.sf.openrocket.gui.main.Splash;
-import net.sf.openrocket.gui.main.SwingExceptionHandler;
-import net.sf.openrocket.gui.util.GUIUtil;
-import net.sf.openrocket.gui.util.Icons;
-import net.sf.openrocket.gui.util.SwingPreferences;
-import net.sf.openrocket.l10n.Translator;
-import net.sf.openrocket.logging.Markers;
 import net.sf.openrocket.motor.Motor;
-import net.sf.openrocket.plugin.PluginModule;
 import net.sf.openrocket.rocketcomponent.Configuration;
 import net.sf.openrocket.rocketcomponent.MotorMount;
 import net.sf.openrocket.rocketcomponent.RocketComponent;
-import net.sf.openrocket.startup.Application;
-import net.sf.openrocket.startup.GuiModule;
 import net.sf.openrocket.util.Color;
 import net.sf.openrocket.util.Coordinate;
 import net.sf.openrocket.util.MathUtil;
@@ -74,14 +47,11 @@ import net.sf.openrocket.util.StateChangeListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.inject.Guice;
-import com.google.inject.Injector;
-import com.google.inject.Module;
 import com.jogamp.opengl.util.awt.AWTGLReadBufferUtil;
 
-public class PhotoBooth extends JPanel implements GLEventListener {
+public class PhotoPanel extends JPanel implements GLEventListener {
 	private static final long serialVersionUID = 1L;
-	private static final Logger log = LoggerFactory.getLogger(PhotoBooth.class);
+	private static final Logger log = LoggerFactory.getLogger(PhotoPanel.class);
 	
 	static {
 		//this allows the GL canvas and things like the motor selection
@@ -89,22 +59,20 @@ public class PhotoBooth extends JPanel implements GLEventListener {
 		JPopupMenu.setDefaultLightWeightPopupEnabled(false);
 	}
 	
-	private final int SHORTCUT_KEY = Toolkit.getDefaultToolkit().getMenuShortcutKeyMask();
-	private final Translator trans = Application.getTranslator();
 	private Configuration configuration;
 	private GLCanvas canvas;
 	private TextureCache textureCache = new TextureCache();
 	private double ratio;
 	private boolean doCopy = false;
 	
-	RocketRenderer rr;
-	PhotoSettings p;
+	private RocketRenderer rr;
+	private PhotoSettings p;
 	
 	public void setDoc(final OpenRocketDocument doc) {
 		canvas.invoke(true, new GLRunnable() {
 			@Override
 			public boolean run(GLAutoDrawable drawable) {
-				PhotoBooth.this.configuration = doc.getDefaultConfiguration();
+				PhotoPanel.this.configuration = doc.getDefaultConfiguration();
 				cachedBounds = null;
 				rr = new RealisticRenderer(doc);
 				rr.init(drawable);
@@ -113,7 +81,16 @@ public class PhotoBooth extends JPanel implements GLEventListener {
 		});
 	}
 	
-	public PhotoBooth() {
+	public void doCopy() {
+		doCopy = true;
+		repaint();
+	}
+	
+	public PhotoSettings getSettings() {
+		return p;
+	}
+	
+	public PhotoPanel() {
 		this.setLayout(new BorderLayout());
 		
 		p = new PhotoSettings();
@@ -128,42 +105,24 @@ public class PhotoBooth extends JPanel implements GLEventListener {
 		p.addChangeListener(new StateChangeListener() {
 			@Override
 			public void stateChanged(EventObject e) {
-				PhotoBooth.this.repaint();
+				log.debug("Repainting on settings state change");
+				PhotoPanel.this.repaint();
 			}
 		});
 		
-		this.add(new PhotoSettingsConfig(p), BorderLayout.EAST);
 	}
 	
 	private void initGLCanvas() {
 		try {
 			log.debug("Setting up GL capabilities...");
-			
-			log.trace("GL - Getting Default Profile");
 			final GLProfile glp = GLProfile.get(GLProfile.GL2);
 			
-			log.trace("GL - creating GLCapabilities");
 			final GLCapabilities caps = new GLCapabilities(glp);
-			
-			log.trace("GL - setSampleBuffers");
 			caps.setSampleBuffers(true);
-			
-			log.trace("GL - setNumSamples");
 			caps.setNumSamples(6);
-			
-			log.trace("GL - Creating Canvas");
 			canvas = new GLCanvas(caps);
-			
-			log.trace("GL - Registering as GLEventListener on canvas");
 			canvas.addGLEventListener(this);
-			
-			log.trace("GL - Adding canvas to this JPanel");
 			this.add(canvas, BorderLayout.CENTER);
-			
-			log.trace("GL - Setting up mouse listeners");
-			setupMouseListeners();
-			
-			
 		} catch (Throwable t) {
 			log.error("An error occurred creating 3d View", t);
 			canvas = null;
@@ -172,26 +131,11 @@ public class PhotoBooth extends JPanel implements GLEventListener {
 		}
 	}
 	
-	private void setupMouseListeners() {
-		MouseInputAdapter a = new MouseInputAdapter() {
-			
-			@Override
-			public void mousePressed(final MouseEvent e) {
-				
-			}
-			
-			@Override
-			public void mouseClicked(final MouseEvent e) {
-				
-			}
-			
-			@Override
-			public void mouseDragged(final MouseEvent e) {
-				
-			}
-		};
-		canvas.addMouseMotionListener(a);
-		canvas.addMouseListener(a);
+	@Override
+	public void repaint() {
+		super.repaint();
+		if (canvas != null)
+			canvas.display();
 	}
 	
 	
@@ -245,8 +189,6 @@ public class PhotoBooth extends JPanel implements GLEventListener {
 		float[] color = new float[3];
 		
 		gl.glEnable(GL.GL_MULTISAMPLE);
-		
-		
 		
 		convertColor(p.getSunlight(), color);
 		float amb = (float) p.getAmbiance();
@@ -429,8 +371,6 @@ public class PhotoBooth extends JPanel implements GLEventListener {
 		}
 	}
 	
-	
-	
 	private void setupModel(final GL2 gl) {
 		// Get the bounds
 		final Bounds b = calculateBounds();
@@ -439,32 +379,6 @@ public class PhotoBooth extends JPanel implements GLEventListener {
 		gl.glRotated(p.getRoll() * (180.0 / Math.PI), 1, 0, 0);
 		// Center the rocket in the view.
 		gl.glTranslated(-b.xMin - b.xSize / 2.0, 0, 0);
-	}
-	
-	/**
-	 * Call when the rocket has changed
-	 */
-	public void updateFigure() {
-		log.debug("3D Figure Updated");
-		cachedBounds = null;
-		canvas.invoke(true, new GLRunnable() {
-			@Override
-			public boolean run(GLAutoDrawable drawable) {
-				rr.updateFigure(drawable);
-				return false;
-			}
-		});
-	}
-	
-	private void internalRepaint() {
-		super.repaint();
-		if (canvas != null)
-			canvas.display();
-	}
-	
-	@Override
-	public void repaint() {
-		internalRepaint();
 	}
 	
 	private void copy(final GLAutoDrawable drawable) {
@@ -506,115 +420,4 @@ public class PhotoBooth extends JPanel implements GLEventListener {
 		}, null);
 	}
 	
-	JMenuBar getMenu() {
-		JMenuBar menubar = new JMenuBar();
-		JMenu menu;
-		JMenuItem item;
-		
-		////  File
-		menu = new JMenu(trans.get("main.menu.file"));
-		menu.setMnemonic(KeyEvent.VK_F);
-		//// File-handling related tasks
-		menu.getAccessibleContext().setAccessibleDescription(trans.get("main.menu.file.desc"));
-		menubar.add(menu);
-		
-		item = new JMenuItem(trans.get("main.menu.file.open"), KeyEvent.VK_O);
-		item.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_O, SHORTCUT_KEY));
-		//// Open a rocket design
-		item.getAccessibleContext().setAccessibleDescription(trans.get("BasicFrame.item.Openrocketdesign"));
-		item.setIcon(Icons.FILE_OPEN);
-		item.addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				log.info(Markers.USER_MARKER, "Open... selected");
-				
-				final FileDialog fd = new FileDialog((JFrame) SwingUtilities.getWindowAncestor(PhotoBooth.this), "Open...", FileDialog.LOAD);
-				fd.setVisible(true);
-				if (fd.getFile() != null) {
-					File file = new File(fd.getDirectory() + fd.getFile());
-					log.debug("Opening File " + file.getAbsolutePath());
-					GeneralRocketLoader grl = new GeneralRocketLoader(file);
-					try {
-						OpenRocketDocument doc = grl.load();
-						setDoc(doc);
-					} catch (RocketLoadException e1) {
-						e1.printStackTrace();
-					}
-				}
-			}
-		});
-		menu.add(item);
-		
-		////  Edit
-		menu = new JMenu(trans.get("main.menu.edit"));
-		menu.setMnemonic(KeyEvent.VK_E);
-		//// Rocket editing
-		menu.getAccessibleContext().setAccessibleDescription(trans.get("BasicFrame.menu.Rocketedt"));
-		menubar.add(menu);
-		
-		
-		Action action = new AbstractAction("Copy") {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				doCopy = true;
-				repaint();
-			}
-		};
-		item = new JMenuItem(action);
-		item.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_C, SHORTCUT_KEY));
-		item.setMnemonic(KeyEvent.VK_C);
-		item.getAccessibleContext().setAccessibleDescription("Copy image to clipboard");
-		menu.add(item);
-		
-		return menubar;
-	}
-	
-	public static void main(String args[]) throws Exception {
-		// Setup the uncaught exception handler
-		log.info("Registering exception handler");
-		SwingExceptionHandler exceptionHandler = new SwingExceptionHandler();
-		Application.setExceptionHandler(exceptionHandler);
-		exceptionHandler.registerExceptionHandler();
-		
-		// Load motors etc.
-		log.info("Loading databases");
-		
-		GuiModule guiModule = new GuiModule();
-		Module pluginModule = new PluginModule();
-		Injector injector = Guice.createInjector(guiModule, pluginModule);
-		Application.setInjector(injector);
-		
-		guiModule.startLoader();
-		
-		// Set the best available look-and-feel
-		log.info("Setting best LAF");
-		GUIUtil.setBestLAF();
-		
-		// Load defaults
-		((SwingPreferences) Application.getPreferences()).loadDefaultUnits();
-		
-		Databases.fakeMethod();
-		
-		JFrame ff = new JFrame();
-		ff.setSize(1024, 768);
-		ff.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		
-		PhotoBooth pb = new PhotoBooth();
-		ff.setJMenuBar(pb.getMenu());
-		ff.setContentPane(pb);
-		ff.setVisible(true);
-		
-		
-		if (true) {
-			Thread.sleep(1);
-			//String f = "C:\\Users\\bkuker\\git\\openrocket\\core\\resources\\datafiles\\examples\\Simulation Listeners.ork";
-			//String f = "C:\\Users\\bkuker\\git\\openrocket\\core\\resources\\datafiles\\examples\\High Power Airstart.ork";
-			String f = "C:\\Users\\bkuker\\git\\openrocket\\core\\resources\\datafiles\\examples\\A simple model rocket.ork";
-			//String f = "C:\\Users\\bkuker\\git\\openrocket\\core\\resources\\datafiles\\examples\\Clustered rocket design.ork";
-			//String f = "C:\\Users\\bkuker\\git\\openrocket\\core\\resources\\datafiles\\examples\\Boosted Dart.ork";
-			GeneralRocketLoader grl = new GeneralRocketLoader(new File(f));
-			OpenRocketDocument doc = grl.load();
-			pb.setDoc(doc);
-		}
-	}
 }
