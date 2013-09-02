@@ -45,7 +45,7 @@ public class SkyBoxCross extends Sky {
 			north = AWTTextureIO.newTexture(GLProfile.getDefault(), fixBug(i.getSubimage(dx, dy, dx, dy)), false);
 			east = AWTTextureIO.newTexture(GLProfile.getDefault(), fixBug(i.getSubimage(dx * 2, dy, dx, dy)), false);
 			south = AWTTextureIO.newTexture(GLProfile.getDefault(), fixBug(i.getSubimage(dx * 3, dy, dx, dy)), false);
-			up = AWTTextureIO.newTexture(GLProfile.getDefault(), fixBug(i.getSubimage(dx, 0 + 1, dx, dy - 2)), false);
+			up = AWTTextureIO.newTexture(GLProfile.getDefault(), fixBug(i.getSubimage(dx, 0, dx, dy)), false);
 			down = AWTTextureIO.newTexture(GLProfile.getDefault(), fixBug(i.getSubimage(dx, 2 * dy, dx, dy)), false);
 		} catch (IOException e) {
 			throw new Error(e);
