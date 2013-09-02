@@ -13,6 +13,7 @@ import java.util.EventObject;
 import java.util.HashSet;
 import java.util.Iterator;
 
+import javax.media.opengl.DebugGL2;
 import javax.media.opengl.GL;
 import javax.media.opengl.GL2;
 import javax.media.opengl.GLAutoDrawable;
@@ -33,7 +34,8 @@ import net.sf.openrocket.gui.figure3d.RealisticRenderer;
 import net.sf.openrocket.gui.figure3d.RocketRenderer;
 import net.sf.openrocket.gui.figure3d.TextureCache;
 import net.sf.openrocket.gui.figure3d.photo.exhaust.FlameRenderer;
-import net.sf.openrocket.gui.figure3d.photo.sky.SkyBox;
+import net.sf.openrocket.gui.figure3d.photo.sky.Sky;
+import net.sf.openrocket.gui.figure3d.photo.sky.SkyBoxCross;
 import net.sf.openrocket.gui.main.Splash;
 import net.sf.openrocket.motor.Motor;
 import net.sf.openrocket.rocketcomponent.Configuration;
@@ -67,6 +69,7 @@ public class PhotoPanel extends JPanel implements GLEventListener {
 	
 	private RocketRenderer rr;
 	private PhotoSettings p;
+	private Sky sky;
 	
 	public void setDoc(final OpenRocketDocument doc) {
 		canvas.invoke(true, new GLRunnable() {
@@ -94,6 +97,8 @@ public class PhotoPanel extends JPanel implements GLEventListener {
 		this.setLayout(new BorderLayout());
 		
 		p = new PhotoSettings();
+		
+		sky = new SkyBoxCross(textureCache);
 		
 		//Fixes a linux / X bug: Splash must be closed before GL Init
 		SplashScreen splash = Splash.getSplashScreen();
@@ -225,9 +230,8 @@ public class PhotoPanel extends JPanel implements GLEventListener {
 		gl.glRotated(p.getViewAz() * (180.0 / Math.PI), 0, 1, 0);
 		gl.glBlendFunc(GL.GL_SRC_ALPHA, GL.GL_ONE_MINUS_SRC_ALPHA);
 		if (p.isSkyEnabled()) {
-			SkyBox.draw(gl, textureCache);
+			sky.draw(gl);
 		}
-		//SkySphere.draw(gl, textureCache);
 		gl.glDepthMask(true);
 		gl.glEnable(GLLightingFunc.GL_LIGHTING);
 		gl.glPopMatrix();
@@ -307,7 +311,7 @@ public class PhotoPanel extends JPanel implements GLEventListener {
 	@Override
 	public void init(final GLAutoDrawable drawable) {
 		log.trace("GL - init()");
-		//drawable.setGL(new DebugGL2(drawable.getGL().getGL2()));
+		drawable.setGL(new DebugGL2(drawable.getGL().getGL2()));
 		
 		final GL2 gl = drawable.getGL().getGL2();
 		

@@ -2,6 +2,7 @@ package net.sf.openrocket.gui.figure3d.photo.sky;
 
 import java.awt.image.BufferedImage;
 import java.io.IOException;
+import java.net.URL;
 
 import javax.imageio.ImageIO;
 import javax.media.opengl.GL;
@@ -13,9 +14,21 @@ import net.sf.openrocket.gui.figure3d.TextureCache;
 import com.jogamp.opengl.util.texture.Texture;
 import com.jogamp.opengl.util.texture.awt.AWTTextureIO;
 
-public class SkyBoxCross {
+public class SkyBoxCross extends Sky {
+	private final TextureCache cache;
 	
-	static Texture north, east, south, west, up, down;
+	private final URL imageURL;
+	Texture north, east, south, west, up, down;
+	
+	public SkyBoxCross(final TextureCache cache) {
+		this.cache = cache;
+		imageURL = SkyBoxCross.class.getResource("cross1.jpg");
+	}
+	
+	public SkyBoxCross(final URL imageURL, final TextureCache cache) {
+		this.cache = cache;
+		this.imageURL = imageURL;
+	}
 	
 	private static BufferedImage fixBug(BufferedImage i) {
 		BufferedImage d2 = new BufferedImage(i.getWidth(), i.getHeight(), i.getType());
@@ -23,9 +36,9 @@ public class SkyBoxCross {
 		return d2;
 	}
 	
-	private static void loadTextures(GL2 gl) {
+	private void loadTextures(GL2 gl) {
 		try {
-			BufferedImage i = ImageIO.read(SkyBoxCross.class.getResource("skybox.jpg"));
+			BufferedImage i = ImageIO.read(imageURL);
 			int dy = i.getHeight() / 3;
 			int dx = i.getWidth() / 4;
 			west = AWTTextureIO.newTexture(GLProfile.getDefault(), fixBug(i.getSubimage(0, dy, dx, dy)), false);
@@ -34,18 +47,17 @@ public class SkyBoxCross {
 			south = AWTTextureIO.newTexture(GLProfile.getDefault(), fixBug(i.getSubimage(dx * 3, dy, dx, dy)), false);
 			up = AWTTextureIO.newTexture(GLProfile.getDefault(), fixBug(i.getSubimage(dx, 0 + 1, dx, dy - 2)), false);
 			down = AWTTextureIO.newTexture(GLProfile.getDefault(), fixBug(i.getSubimage(dx, 2 * dy, dx, dy)), false);
-			
-			
-			
 		} catch (IOException e) {
 			throw new Error(e);
 		}
 	}
 	
-	public static void draw(GL2 gl, TextureCache cache) {
+	@Override
+	public void draw(GL2 gl) {
 		if (north == null) {
 			loadTextures(gl);
 		}
+		
 		gl.glPushMatrix();
 		gl.glColor3d(1, 1, 1);
 		square(gl, north);
