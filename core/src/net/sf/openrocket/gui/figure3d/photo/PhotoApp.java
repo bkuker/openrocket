@@ -26,6 +26,7 @@ import net.sf.openrocket.gui.util.GUIUtil;
 import net.sf.openrocket.gui.util.Icons;
 import net.sf.openrocket.gui.util.SwingPreferences;
 import net.sf.openrocket.l10n.Translator;
+import net.sf.openrocket.logging.LoggingSystemSetup;
 import net.sf.openrocket.logging.Markers;
 import net.sf.openrocket.plugin.PluginModule;
 import net.sf.openrocket.startup.Application;
@@ -182,6 +183,10 @@ public class PhotoApp extends JFrame {
 	
 	
 	public static void main(String args[]) throws Exception {
+		
+		LoggingSystemSetup.setupLoggingAppender();
+		LoggingSystemSetup.addConsoleAppender();
+		
 		// Setup the uncaught exception handler
 		log.info("Registering exception handler");
 		SwingExceptionHandler exceptionHandler = new SwingExceptionHandler();
