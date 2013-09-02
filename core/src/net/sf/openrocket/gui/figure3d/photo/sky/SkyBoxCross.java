@@ -15,18 +15,15 @@ import com.jogamp.opengl.util.texture.Texture;
 import com.jogamp.opengl.util.texture.awt.AWTTextureIO;
 
 public class SkyBoxCross extends Sky {
-	private final TextureCache cache;
 	
 	private final URL imageURL;
 	Texture north, east, south, west, up, down;
 	
 	public SkyBoxCross(final TextureCache cache) {
-		this.cache = cache;
 		imageURL = SkyBoxCross.class.getResource("cross1.jpg");
 	}
 	
 	public SkyBoxCross(final URL imageURL, final TextureCache cache) {
-		this.cache = cache;
 		this.imageURL = imageURL;
 	}
 	
@@ -41,12 +38,12 @@ public class SkyBoxCross extends Sky {
 			BufferedImage i = ImageIO.read(imageURL);
 			int dy = i.getHeight() / 3;
 			int dx = i.getWidth() / 4;
-			west = AWTTextureIO.newTexture(GLProfile.getDefault(), fixBug(i.getSubimage(0, dy, dx, dy)), false);
-			north = AWTTextureIO.newTexture(GLProfile.getDefault(), fixBug(i.getSubimage(dx, dy, dx, dy)), false);
-			east = AWTTextureIO.newTexture(GLProfile.getDefault(), fixBug(i.getSubimage(dx * 2, dy, dx, dy)), false);
-			south = AWTTextureIO.newTexture(GLProfile.getDefault(), fixBug(i.getSubimage(dx * 3, dy, dx, dy)), false);
-			up = AWTTextureIO.newTexture(GLProfile.getDefault(), fixBug(i.getSubimage(dx, 0, dx, dy)), false);
-			down = AWTTextureIO.newTexture(GLProfile.getDefault(), fixBug(i.getSubimage(dx, 2 * dy, dx, dy)), false);
+			west = AWTTextureIO.newTexture(GLProfile.getDefault(), fixBug(i.getSubimage(0, dy, dx, dy)), true);
+			north = AWTTextureIO.newTexture(GLProfile.getDefault(), fixBug(i.getSubimage(dx, dy, dx, dy)), true);
+			east = AWTTextureIO.newTexture(GLProfile.getDefault(), fixBug(i.getSubimage(dx * 2, dy, dx, dy)), true);
+			south = AWTTextureIO.newTexture(GLProfile.getDefault(), fixBug(i.getSubimage(dx * 3, dy, dx, dy)), true);
+			up = AWTTextureIO.newTexture(GLProfile.getDefault(), fixBug(i.getSubimage(dx, 0, dx, dy)), true);
+			down = AWTTextureIO.newTexture(GLProfile.getDefault(), fixBug(i.getSubimage(dx, 2 * dy, dx, dy)), true);
 		} catch (IOException e) {
 			throw new Error(e);
 		}
