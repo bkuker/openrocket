@@ -35,7 +35,7 @@ import net.sf.openrocket.gui.figure3d.RocketRenderer;
 import net.sf.openrocket.gui.figure3d.TextureCache;
 import net.sf.openrocket.gui.figure3d.photo.exhaust.FlameRenderer;
 import net.sf.openrocket.gui.figure3d.photo.sky.Sky;
-import net.sf.openrocket.gui.figure3d.photo.sky.SkyBoxCross;
+import net.sf.openrocket.gui.figure3d.photo.sky.SkyBox;
 import net.sf.openrocket.gui.main.Splash;
 import net.sf.openrocket.motor.Motor;
 import net.sf.openrocket.rocketcomponent.Configuration;
@@ -98,7 +98,7 @@ public class PhotoPanel extends JPanel implements GLEventListener {
 		
 		p = new PhotoSettings();
 		
-		sky = new SkyBoxCross(textureCache);
+		sky = new SkyBox(textureCache);
 		
 		//Fixes a linux / X bug: Splash must be closed before GL Init
 		SplashScreen splash = Splash.getSplashScreen();

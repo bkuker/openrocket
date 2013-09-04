@@ -1,5 +1,7 @@
 package net.sf.openrocket.gui.figure3d.photo.sky;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
 
@@ -8,47 +10,87 @@ import javax.media.opengl.GL2;
 
 import net.sf.openrocket.gui.figure3d.TextureCache;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.jogamp.opengl.util.texture.Texture;
 
 public class SkyBox extends Sky {
+	private static final Logger log = LoggerFactory.getLogger(SkyBox.class);
+	
+	private static final String NAME[][] = {
+			{ "North", "East", "South", "West", "Up", "Down" },
+			{ "posz", "posx", "negz", "negx", "posy", "negy" },
+			{ "pos_z", "pos_x", "neg_z", "neg_x", "pos_y", "neg_y" },
+			{ "ft", "rt", "bk", "lf", "up", "dn" }
+	};
+	private static final String[] TYPE = { ".jpg", ".jpeg", ".png" };
+	
 	private final TextureCache cache;
-	private final URL baseURL;
+	private final String prefix;
+	private String suffix;
+	private String[] dir;
 	
 	public SkyBox(final TextureCache cache) {
-		this.cache = cache;
-		baseURL = SkyBox.class.getResource("");
+		this(SkyBox.class.getResource("/datafiles/sky/space/").toString() + "sky_", cache);
 	}
 	
-	public SkyBox(final URL baseURL, final TextureCache cache) {
+	public SkyBox(final String prefix, final TextureCache cache) {
 		this.cache = cache;
-		this.baseURL = baseURL;
+		this.prefix = prefix;
+		this.suffix = ".jpg";
+		
+		found: for (String trySuf : TYPE) {
+			suffix = trySuf;
+			for (String[] tryDir : NAME) {
+				dir = tryDir;
+				try {
+					URL u = url(dir[0]);
+					log.debug("Trying URL {}", u);
+					InputStream is = u.openStream();
+					is.close();
+					break found;
+				} catch (IOException e) {
+					log.debug("Nope, {}", e.getMessage());
+				}
+			}
+		}
+		
 	}
+	
+	private URL url(String s) {
+		try {
+			return new URL(prefix + s + suffix);
+		} catch (MalformedURLException e) {
+			throw new Error(e);
+		}
+	}
+	
+	
 	
 	@Override
 	public void draw(GL2 gl) {
 		gl.glPushMatrix();
 		gl.glColor3d(1, 1, 1);
-		try {
-			square(gl, cache.getTexture(new URL(baseURL, "North.jpg")));
-			
-			gl.glRotatef(90, 0, 1, 0);
-			square(gl, cache.getTexture(new URL(baseURL, "East.jpg")));
-			
-			gl.glRotatef(90, 0, 1, 0);
-			square(gl, cache.getTexture(new URL(baseURL, "South.jpg")));
-			
-			gl.glRotatef(90, 0, 1, 0);
-			square(gl, cache.getTexture(new URL(baseURL, "West.jpg")));
-			
-			gl.glRotatef(-90, 1, 0, 0);
-			gl.glRotatef(90, 0, 0, 1);
-			square(gl, cache.getTexture(new URL(baseURL, "Up.jpg")));
-			
-			gl.glRotatef(180, 1, 0, 0);
-			square(gl, cache.getTexture(new URL(baseURL, "Down.jpg")));
-		} catch (MalformedURLException e) {
-			e.printStackTrace();
-		}
+		
+		square(gl, cache.getTexture(url(dir[0])));
+		
+		gl.glRotatef(90, 0, 1, 0);
+		square(gl, cache.getTexture(url(dir[1])));
+		
+		gl.glRotatef(90, 0, 1, 0);
+		square(gl, cache.getTexture(url(dir[2])));
+		
+		gl.glRotatef(90, 0, 1, 0);
+		square(gl, cache.getTexture(url(dir[3])));
+		
+		gl.glRotatef(-90, 1, 0, 0);
+		gl.glRotatef(90, 0, 0, 1);
+		square(gl, cache.getTexture(url(dir[4])));
+		
+		gl.glRotatef(180, 1, 0, 0);
+		square(gl, cache.getTexture(url(dir[5])));
+		
 		gl.glPopMatrix();
 	}
 	
