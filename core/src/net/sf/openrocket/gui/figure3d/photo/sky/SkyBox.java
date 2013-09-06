@@ -32,7 +32,7 @@ public class SkyBox extends Sky {
 	private String[] dir;
 	
 	public SkyBox(final TextureCache cache) {
-		this(SkyBox.class.getResource("/datafiles/sky/space/").toString() + "sky_", cache);
+		this(SkyBox.class.getResource("/datafiles/sky/box/").toString(), cache);
 	}
 	
 	public SkyBox(final String prefix, final TextureCache cache) {
@@ -103,14 +103,15 @@ public class SkyBox extends Sky {
 		gl.glTexCoord2f(1, 1);
 		gl.glVertex3f(-1, -1, 1);
 		
-		gl.glTexCoord2f(0, 1);
-		gl.glVertex3f(1, -1, 1);
-		
 		gl.glTexCoord2f(1, 0);
 		gl.glVertex3f(-1, 1, 1);
 		
+		gl.glTexCoord2f(0, 1);
+		gl.glVertex3f(1, -1, 1);
+		
 		gl.glTexCoord2f(0, 0);
 		gl.glVertex3f(1, 1, 1);
+		
 		gl.glEnd();
 		t.disable(gl);
 	}

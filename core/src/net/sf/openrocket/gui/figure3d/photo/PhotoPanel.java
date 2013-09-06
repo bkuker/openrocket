@@ -218,9 +218,13 @@ public class PhotoPanel extends JPanel implements GLEventListener {
 		gl.glLoadIdentity();
 		gl.glScaled(-1, 1, 1);
 		gl.glTranslated(-1, 0, 0);
-		gl.glMatrixMode(GLMatrixFunc.GL_MODELVIEW);
 		
+		gl.glMatrixMode(GLMatrixFunc.GL_MODELVIEW);
 		gl.glLoadIdentity();
+		
+		gl.glEnable(GL.GL_CULL_FACE);
+		gl.glCullFace(GL.GL_BACK);
+		gl.glFrontFace(GL.GL_CCW);
 		
 		//Draw the sky
 		gl.glPushMatrix();

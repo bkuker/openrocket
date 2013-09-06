@@ -2,6 +2,7 @@ package net.sf.openrocket.gui.figure3d.photo.sky;
 
 import java.net.URL;
 
+import javax.media.opengl.GL;
 import javax.media.opengl.GL2;
 import javax.media.opengl.glu.GLU;
 import javax.media.opengl.glu.GLUquadric;
@@ -27,6 +28,7 @@ public class SkySphere extends Sky {
 	
 	@Override
 	public void draw(GL2 gl) {
+		gl.glCullFace(GL.GL_FRONT);
 		gl.glPushMatrix();
 		GLU glu = new GLU();
 		gl.glRotatef(90, 1, 0, 0);
@@ -40,5 +42,6 @@ public class SkySphere extends Sky {
 		glu.gluSphere(q, 1f, 20, 20);
 		sky.disable(gl);
 		gl.glPopMatrix();
+		gl.glCullFace(GL.GL_BACK);
 	}
 }

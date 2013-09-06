@@ -20,7 +20,7 @@ public class SkyBoxCross extends Sky {
 	Texture north, east, south, west, up, down;
 	
 	public SkyBoxCross(final TextureCache cache) {
-		imageURL = SkyBoxCross.class.getResource("cross1.jpg");
+		imageURL = SkyBoxCross.class.getResource("/datafiles/sky/cross1.jpg");
 	}
 	
 	public SkyBoxCross(final URL imageURL, final TextureCache cache) {
@@ -88,11 +88,11 @@ public class SkyBoxCross extends Sky {
 		gl.glTexCoord2f(1, 1);
 		gl.glVertex3f(-1, -1, 1);
 		
-		gl.glTexCoord2f(0, 1);
-		gl.glVertex3f(1, -1, 1);
-		
 		gl.glTexCoord2f(1, 0);
 		gl.glVertex3f(-1, 1, 1);
+		
+		gl.glTexCoord2f(0, 1);
+		gl.glVertex3f(1, -1, 1);
 		
 		gl.glTexCoord2f(0, 0);
 		gl.glVertex3f(1, 1, 1);
