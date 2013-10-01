@@ -1,6 +1,7 @@
 package net.sf.openrocket.gui.figure3d.photo;
 
 import java.awt.BorderLayout;
+import java.awt.Component;
 import java.awt.SplashScreen;
 import java.awt.Toolkit;
 import java.awt.datatransfer.DataFlavor;
@@ -22,6 +23,7 @@ import javax.media.opengl.GLEventListener;
 import javax.media.opengl.GLProfile;
 import javax.media.opengl.GLRunnable;
 import javax.media.opengl.awt.GLCanvas;
+import javax.media.opengl.awt.GLJPanel;
 import javax.media.opengl.fixedfunc.GLLightingFunc;
 import javax.media.opengl.fixedfunc.GLMatrixFunc;
 import javax.media.opengl.glu.GLU;
@@ -39,6 +41,8 @@ import net.sf.openrocket.motor.Motor;
 import net.sf.openrocket.rocketcomponent.Configuration;
 import net.sf.openrocket.rocketcomponent.MotorMount;
 import net.sf.openrocket.rocketcomponent.RocketComponent;
+import net.sf.openrocket.startup.Application;
+import net.sf.openrocket.startup.Preferences;
 import net.sf.openrocket.util.Color;
 import net.sf.openrocket.util.Coordinate;
 import net.sf.openrocket.util.MathUtil;
@@ -60,7 +64,7 @@ public class PhotoPanel extends JPanel implements GLEventListener {
 	}
 	
 	private Configuration configuration;
-	private GLCanvas canvas;
+	private Component canvas;
 	private TextureCache textureCache = new TextureCache();
 	private double ratio;
 	private boolean doCopy = false;
@@ -69,7 +73,7 @@ public class PhotoPanel extends JPanel implements GLEventListener {
 	private PhotoSettings p;
 	
 	public void setDoc(final OpenRocketDocument doc) {
-		canvas.invoke(true, new GLRunnable() {
+		((GLAutoDrawable) canvas).invoke(true, new GLRunnable() {
 			@Override
 			public boolean run(GLAutoDrawable drawable) {
 				PhotoPanel.this.configuration = doc.getDefaultConfiguration();
@@ -118,10 +122,24 @@ public class PhotoPanel extends JPanel implements GLEventListener {
 			final GLProfile glp = GLProfile.get(GLProfile.GL2);
 			
 			final GLCapabilities caps = new GLCapabilities(glp);
-			caps.setSampleBuffers(true);
-			caps.setNumSamples(6);
-			canvas = new GLCanvas(caps);
-			canvas.addGLEventListener(this);
+			
+			
+			if (Application.getPreferences().getBoolean(Preferences.OPENGL_ENABLE_AA, true)) {
+				caps.setSampleBuffers(true);
+				caps.setNumSamples(6);
+			} else {
+				log.trace("GL - Not enabling AA by user pref");
+			}
+			
+			if (Application.getPreferences().getBoolean(Preferences.OPENGL_USE_FBO, false)) {
+				log.trace("GL - Creating GLJPanel");
+				canvas = new GLJPanel(caps);
+			} else {
+				log.trace("GL - Creating GLCanvas");
+				canvas = new GLCanvas(caps);
+			}
+			
+			((GLAutoDrawable) canvas).addGLEventListener(this);
 			this.add(canvas, BorderLayout.CENTER);
 		} catch (Throwable t) {
 			log.error("An error occurred creating 3d View", t);
@@ -135,7 +153,7 @@ public class PhotoPanel extends JPanel implements GLEventListener {
 	public void repaint() {
 		super.repaint();
 		if (canvas != null)
-			canvas.display();
+			((GLAutoDrawable) canvas).display();
 	}
 	
 	
