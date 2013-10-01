@@ -2,6 +2,7 @@ package net.sf.openrocket.gui.figure3d;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.Component;
 import java.awt.Graphics2D;
 import java.awt.Point;
 import java.awt.Rectangle;
@@ -23,6 +24,7 @@ import javax.media.opengl.GLEventListener;
 import javax.media.opengl.GLProfile;
 import javax.media.opengl.GLRunnable;
 import javax.media.opengl.awt.GLCanvas;
+import javax.media.opengl.awt.GLJPanel;
 import javax.media.opengl.fixedfunc.GLLightingFunc;
 import javax.media.opengl.fixedfunc.GLMatrixFunc;
 import javax.media.opengl.glu.GLU;
@@ -39,6 +41,8 @@ import net.sf.openrocket.gui.figureelements.FigureElement;
 import net.sf.openrocket.gui.main.Splash;
 import net.sf.openrocket.rocketcomponent.Configuration;
 import net.sf.openrocket.rocketcomponent.RocketComponent;
+import net.sf.openrocket.startup.Application;
+import net.sf.openrocket.startup.Preferences;
 import net.sf.openrocket.util.Coordinate;
 import net.sf.openrocket.util.MathUtil;
 
@@ -71,8 +75,7 @@ public class RocketFigure3d extends JPanel implements GLEventListener {
 	
 	private final OpenRocketDocument document;
 	private final Configuration configuration;
-	private GLCanvas canvas;
-	
+	private Component canvas;
 	
 	
 	private Overlay extrasOverlay, caretOverlay;
@@ -109,7 +112,7 @@ public class RocketFigure3d extends JPanel implements GLEventListener {
 	}
 	
 	public void flushTextureCaches() {
-		canvas.invoke(true, new GLRunnable() {
+		((GLAutoDrawable) canvas).invoke(true, new GLRunnable() {
 			@Override
 			public boolean run(GLAutoDrawable drawable) {
 				rr.flushTextureCache(drawable);
@@ -124,7 +127,11 @@ public class RocketFigure3d extends JPanel implements GLEventListener {
 	 * @return
 	 */
 	public static boolean is3dEnabled() {
-		return System.getProperty("openrocket.3d.disable") == null;
+		//Allow disable by command line, if program won't even start
+		if (System.getProperty("openrocket.3d.disable") != null)
+			return false;
+		//return by preference
+		return Application.getPreferences().getBoolean(Preferences.OPENGL_ENABLED, true);
 	}
 	
 	private void initGLCanvas() {
@@ -138,17 +145,26 @@ public class RocketFigure3d extends JPanel implements GLEventListener {
 			log.trace("GL - creating GLCapabilities");
 			final GLCapabilities caps = new GLCapabilities(glp);
 			
-			log.trace("GL - setSampleBuffers");
-			caps.setSampleBuffers(true);
+			if (Application.getPreferences().getBoolean(Preferences.OPENGL_ENABLE_AA, true)) {
+				log.trace("GL - setSampleBuffers");
+				caps.setSampleBuffers(true);
+				
+				log.trace("GL - setNumSamples");
+				caps.setNumSamples(6);
+			} else {
+				log.trace("GL - Not enabling AA by user pref");
+			}
 			
-			log.trace("GL - setNumSamples");
-			caps.setNumSamples(6);
-			
-			log.trace("GL - Creating Canvas");
-			canvas = new GLCanvas(caps);
+			if (Application.getPreferences().getBoolean(Preferences.OPENGL_USE_FBO, false)) {
+				log.trace("GL - Creating GLJPanel");
+				canvas = new GLJPanel(caps);
+			} else {
+				log.trace("GL - Creating GLCanvas");
+				canvas = new GLCanvas(caps);
+			}
 			
 			log.trace("GL - Registering as GLEventListener on canvas");
-			canvas.addGLEventListener(this);
+			((GLAutoDrawable) canvas).addGLEventListener(this);
 			
 			log.trace("GL - Adding canvas to this JPanel");
 			this.add(canvas, BorderLayout.CENTER);
@@ -234,6 +250,10 @@ public class RocketFigure3d extends JPanel implements GLEventListener {
 			
 			@Override
 			public void mouseDragged(final MouseEvent e) {
+				//You can get a drag without a press while a modal dialog is shown
+				if (pressEvent == null)
+					return;
+				
 				int dx = lastX - e.getX();
 				int dy = lastY - e.getY();
 				lastX = e.getX();
@@ -302,6 +322,10 @@ public class RocketFigure3d extends JPanel implements GLEventListener {
 		
 		drawExtras(gl, glu);
 		drawCarets(gl, glu);
+		
+		//GLJPanel with GLSL Flipper relies on this:
+		gl.glFrontFace(GL.GL_CCW);
+		
 	}
 	
 	
@@ -527,19 +551,22 @@ public class RocketFigure3d extends JPanel implements GLEventListener {
 	public void updateFigure() {
 		log.debug("3D Figure Updated");
 		cachedBounds = null;
-		canvas.invoke(true, new GLRunnable() {
-			@Override
-			public boolean run(GLAutoDrawable drawable) {
-				rr.updateFigure(drawable);
-				return false;
-			}
-		});
+		if (canvas != null) {
+			((GLAutoDrawable) canvas).invoke(true, new GLRunnable() {
+				@Override
+				public boolean run(GLAutoDrawable drawable) {
+					rr.updateFigure(drawable);
+					return false;
+				}
+			});
+		}
 	}
 	
 	private void internalRepaint() {
+		if (canvas != null) {
+			((GLAutoDrawable) canvas).display();
+		}
 		super.repaint();
-		if (canvas != null)
-			canvas.display();
 	}
 	
 	@Override
@@ -647,11 +674,16 @@ public class RocketFigure3d extends JPanel implements GLEventListener {
 	}
 	
 	public void setType(final int t) {
+		//There is no canvas if there was an error while creating it.
+		if (canvas == null)
+			return;
+		
 		// The first time the user selects any 3d figure types,  the canvas' internal _drawable
 		// has not been realized.  Unfortunately, there is a test in canvas.invoke which doesn't
 		// execute the runnable if the drawable isn't realized.
 		// In order to trump this, we test if the canvas has not been realized and initialize
 		// the renderer accordingly.  There is certainly a better way to do this.
+		
 		
 		final RocketRenderer newRR;
 		
@@ -666,15 +698,19 @@ public class RocketFigure3d extends JPanel implements GLEventListener {
 			newRR = new FigureRenderer();
 		}
 		
-		if (!canvas.isRealized()) {
+		if (canvas instanceof GLCanvas && !((GLCanvas) canvas).isRealized()) {
+			rr = newRR;
+		} else if (canvas instanceof GLJPanel && !((GLJPanel) canvas).isRealized()) {
 			rr = newRR;
 		} else {
-			canvas.invoke(true, new GLRunnable() {
+			((GLAutoDrawable) canvas).invoke(true, new GLRunnable() {
 				@Override
 				public boolean run(GLAutoDrawable drawable) {
 					rr.dispose(drawable);
 					rr = newRR;
 					newRR.init(drawable);
+					if (canvas instanceof GLJPanel)
+						internalRepaint();
 					return false;
 				}
 			});

@@ -14,6 +14,8 @@ import javax.swing.JPanel;
 import javax.swing.JTabbedPane;
 import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 
@@ -204,6 +206,9 @@ public class SimulationEditDialog extends JDialog {
 		
 		//// Run simulation button
 		button = new JButton(trans.get("SimulationEditDialog.btn.simulateAndPlot"));
+		if (!isSingleEdit()) {
+			button.setText(trans.get("SimulationEditDialog.btn.simulate"));
+		}
 		button.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
@@ -212,6 +217,8 @@ public class SimulationEditDialog extends JDialog {
 				refreshView();
 				if (allowsPlotMode()) {
 					setPlotMode();
+				} else {
+					setVisible(false);
 				}
 			}
 		});
@@ -264,7 +271,25 @@ public class SimulationEditDialog extends JDialog {
 			
 			plotExportPanel.add(button, "spanx, split 3, align left");
 			
-			JButton ok = new JButton(trans.get("SimulationEditDialog.btn.plot"));
+			final JButton ok = new JButton(trans.get("SimulationEditDialog.btn.plot"));
+			
+			tabbedPane.addChangeListener(new ChangeListener() {
+				
+				@Override
+				public void stateChanged(ChangeEvent e) {
+					int selectedIndex = tabbedPane.getSelectedIndex();
+					switch (selectedIndex) {
+					case 0:
+						ok.setText(trans.get("SimulationEditDialog.btn.plot"));
+						break;
+					case 1:
+						ok.setText(trans.get("SimulationEditDialog.btn.export"));
+						break;
+					}
+				}
+				
+			});
+			
 			ok.addActionListener(new ActionListener() {
 				@Override
 				public void actionPerformed(ActionEvent e) {
