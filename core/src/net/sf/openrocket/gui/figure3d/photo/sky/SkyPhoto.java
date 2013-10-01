@@ -11,21 +11,14 @@ import net.sf.openrocket.gui.figure3d.TextureCache;
 import com.jogamp.opengl.util.texture.Texture;
 
 public class SkyPhoto extends Sky {
-	private final TextureCache cache;
 	private final URL imageURL;
 	
-	public SkyPhoto(final TextureCache cache) {
-		this.cache = cache;
-		imageURL = SkyPhoto.class.getResource("/datafiles/sky/space.jpg");
-	}
-	
-	public SkyPhoto(final URL imageURL, final TextureCache cache) {
-		this.cache = cache;
+	public SkyPhoto(final URL imageURL) {
 		this.imageURL = imageURL;
 	}
 	
 	@Override
-	public void draw(GL2 gl) {
+	public void draw(GL2 gl, final TextureCache cache) {
 		gl.glMatrixMode(GLMatrixFunc.GL_PROJECTION);
 		gl.glPushMatrix();
 		gl.glLoadIdentity();

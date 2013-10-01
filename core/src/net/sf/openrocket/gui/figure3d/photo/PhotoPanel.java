@@ -34,8 +34,6 @@ import net.sf.openrocket.gui.figure3d.RealisticRenderer;
 import net.sf.openrocket.gui.figure3d.RocketRenderer;
 import net.sf.openrocket.gui.figure3d.TextureCache;
 import net.sf.openrocket.gui.figure3d.photo.exhaust.FlameRenderer;
-import net.sf.openrocket.gui.figure3d.photo.sky.Sky;
-import net.sf.openrocket.gui.figure3d.photo.sky.SkyBox;
 import net.sf.openrocket.gui.main.Splash;
 import net.sf.openrocket.motor.Motor;
 import net.sf.openrocket.rocketcomponent.Configuration;
@@ -69,7 +67,6 @@ public class PhotoPanel extends JPanel implements GLEventListener {
 	
 	private RocketRenderer rr;
 	private PhotoSettings p;
-	private Sky sky;
 	
 	public void setDoc(final OpenRocketDocument doc) {
 		canvas.invoke(true, new GLRunnable() {
@@ -97,8 +94,6 @@ public class PhotoPanel extends JPanel implements GLEventListener {
 		this.setLayout(new BorderLayout());
 		
 		p = new PhotoSettings();
-		
-		sky = new SkyBox(textureCache);
 		
 		//Fixes a linux / X bug: Splash must be closed before GL Init
 		SplashScreen splash = Splash.getSplashScreen();
@@ -233,8 +228,8 @@ public class PhotoPanel extends JPanel implements GLEventListener {
 		gl.glRotated(p.getViewAlt() * (180.0 / Math.PI), 1, 0, 0);
 		gl.glRotated(p.getViewAz() * (180.0 / Math.PI), 0, 1, 0);
 		gl.glBlendFunc(GL.GL_SRC_ALPHA, GL.GL_ONE_MINUS_SRC_ALPHA);
-		if (p.isSkyEnabled()) {
-			sky.draw(gl);
+		if (p.getSky() != null) {
+			p.getSky().draw(gl, textureCache);
 		}
 		gl.glDepthMask(true);
 		gl.glEnable(GLLightingFunc.GL_LIGHTING);

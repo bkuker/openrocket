@@ -22,21 +22,18 @@ public class SkyBox extends Sky {
 			{ "North", "East", "South", "West", "Up", "Down" },
 			{ "posz", "posx", "negz", "negx", "posy", "negy" },
 			{ "pos_z", "pos_x", "neg_z", "neg_x", "pos_y", "neg_y" },
-			{ "ft", "rt", "bk", "lf", "up", "dn" }
+			//{ "ft", "rt", "bk", "lf", "up", "dn" }
+			//
+			
+			{ "rt", "ft", "lf", "bk", "up", "dn" }
 	};
 	private static final String[] TYPE = { ".jpg", ".jpeg", ".png" };
 	
-	private final TextureCache cache;
 	private final String prefix;
 	private String suffix;
 	private String[] dir;
 	
-	public SkyBox(final TextureCache cache) {
-		this(SkyBox.class.getResource("/datafiles/sky/box/").toString(), cache);
-	}
-	
-	public SkyBox(final String prefix, final TextureCache cache) {
-		this.cache = cache;
+	public SkyBox(final String prefix) {
 		this.prefix = prefix;
 		this.suffix = ".jpg";
 		
@@ -69,7 +66,7 @@ public class SkyBox extends Sky {
 	
 	
 	@Override
-	public void draw(GL2 gl) {
+	public void draw(GL2 gl, final TextureCache cache) {
 		gl.glPushMatrix();
 		gl.glColor3d(1, 1, 1);
 		

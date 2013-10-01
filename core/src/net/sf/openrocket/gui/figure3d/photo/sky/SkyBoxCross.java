@@ -19,11 +19,7 @@ public class SkyBoxCross extends Sky {
 	private final URL imageURL;
 	Texture north, east, south, west, up, down;
 	
-	public SkyBoxCross(final TextureCache cache) {
-		imageURL = SkyBoxCross.class.getResource("/datafiles/sky/cross1.jpg");
-	}
-	
-	public SkyBoxCross(final URL imageURL, final TextureCache cache) {
+	public SkyBoxCross(final URL imageURL) {
 		this.imageURL = imageURL;
 	}
 	
@@ -50,7 +46,7 @@ public class SkyBoxCross extends Sky {
 	}
 	
 	@Override
-	public void draw(GL2 gl) {
+	public void draw(GL2 gl, final TextureCache cache) {
 		if (north == null) {
 			loadTextures(gl);
 		}

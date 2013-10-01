@@ -13,21 +13,14 @@ import com.jogamp.opengl.util.texture.Texture;
 
 public class SkySphere extends Sky {
 	
-	private final TextureCache cache;
 	private final URL imageURL;
 	
-	public SkySphere(final TextureCache cache) {
-		this.cache = cache;
-		imageURL = SkySphere.class.getResource("sky.png");
-	}
-	
-	public SkySphere(final URL imageURL, final TextureCache cache) {
-		this.cache = cache;
+	public SkySphere(final URL imageURL) {
 		this.imageURL = imageURL;
 	}
 	
 	@Override
-	public void draw(GL2 gl) {
+	public void draw(GL2 gl, final TextureCache cache) {
 		gl.glCullFace(GL.GL_FRONT);
 		gl.glPushMatrix();
 		GLU glu = new GLU();

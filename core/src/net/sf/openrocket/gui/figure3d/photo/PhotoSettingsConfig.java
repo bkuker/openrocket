@@ -7,15 +7,18 @@ import java.awt.event.ActionListener;
 import java.lang.reflect.Method;
 import java.util.EventObject;
 
+import javax.swing.DefaultComboBoxModel;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JColorChooser;
+import javax.swing.JComboBox;
 import javax.swing.JDialog;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JSeparator;
 import javax.swing.JSpinner;
 import javax.swing.JTabbedPane;
+import javax.swing.JTextArea;
 import javax.swing.SwingConstants;
 
 import net.miginfocom.swing.MigLayout;
@@ -25,6 +28,14 @@ import net.sf.openrocket.gui.components.ColorIcon;
 import net.sf.openrocket.gui.components.StyledLabel;
 import net.sf.openrocket.gui.components.StyledLabel.Style;
 import net.sf.openrocket.gui.components.UnitSelector;
+import net.sf.openrocket.gui.figure3d.photo.sky.Sky;
+import net.sf.openrocket.gui.figure3d.photo.sky.Sky.Credit;
+import net.sf.openrocket.gui.figure3d.photo.sky.builtin.Lake;
+import net.sf.openrocket.gui.figure3d.photo.sky.builtin.Meadow;
+import net.sf.openrocket.gui.figure3d.photo.sky.builtin.Miramar;
+import net.sf.openrocket.gui.figure3d.photo.sky.builtin.Mountains;
+import net.sf.openrocket.gui.figure3d.photo.sky.builtin.Orbit;
+import net.sf.openrocket.gui.figure3d.photo.sky.builtin.Storm;
 import net.sf.openrocket.gui.util.ColorConversion;
 import net.sf.openrocket.startup.Application;
 import net.sf.openrocket.unit.UnitGroup;
@@ -186,7 +197,60 @@ public class PhotoSettingsConfig extends JTabbedPane {
 				add(skyColorButton, "wrap");
 				
 				add(new JLabel("Sky Image"));
-				add(new JCheckBox(new BooleanModel(p, "SkyEnabled")), "wrap");
+				
+				
+				
+				add(new JComboBox(new DefaultComboBoxModel(new Object[] {
+						Mountains.instance,
+						Meadow.instance,
+						Storm.instance,
+						Lake.instance,
+						Orbit.instance,
+						Miramar.instance
+				}) {
+				}) {
+					{
+						addActionListener(new ActionListener() {
+							@Override
+							public void actionPerformed(ActionEvent e) {
+								Object s = ((JComboBox) e.getSource()).getSelectedItem();
+								if (s instanceof Sky) {
+									p.setSky((Sky) s);
+								} else if (s == null) {
+									p.setSky(null);
+								}
+							}
+						});
+						
+						setSelectedItem(p.getSky());
+					}
+				}, "wrap");
+				
+				final JLabel creditLabel = new JLabel("Image Credit:");
+				add(creditLabel, "wrap");
+				
+				final JTextArea credit = new JTextArea();
+				credit.setEditable(false);
+				credit.setCursor(null);
+				credit.setOpaque(false);
+				credit.setFocusable(false);
+				credit.setFont(creditLabel.getFont());
+				add(credit, "span, gap left 10px");
+				
+				final StateChangeListener skyChange = new StateChangeListener() {
+					@Override
+					public void stateChanged(EventObject e) {
+						if (p.getSky() instanceof Sky.Credit) {
+							credit.setText(((Credit) p.getSky()).getCredit());
+						} else {
+							credit.setText("");
+						}
+					}
+				};
+				p.addChangeListener(skyChange);
+				
+				skyChange.stateChanged(null);
+				
 			}
 		});
 		

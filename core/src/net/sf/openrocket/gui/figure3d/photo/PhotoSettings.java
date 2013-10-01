@@ -1,5 +1,7 @@
 package net.sf.openrocket.gui.figure3d.photo;
 
+import net.sf.openrocket.gui.figure3d.photo.sky.Sky;
+import net.sf.openrocket.gui.figure3d.photo.sky.builtin.Mountains;
 import net.sf.openrocket.util.AbstractChangeSource;
 import net.sf.openrocket.util.Color;
 
@@ -19,7 +21,6 @@ public class PhotoSettings extends AbstractChangeSource {
 	private Color sunlight = new Color(255, 255, 255);
 	private double ambiance = .3f;
 	
-	private boolean skyEnabled = true;
 	private Color skyColor = new Color(55, 95, 155);
 	
 	
@@ -30,6 +31,8 @@ public class PhotoSettings extends AbstractChangeSource {
 	private Color smokeColor = new Color(230, 230, 230, 204);
 	private boolean sparks = false;
 	private double exhaustScale = 1.0;
+	
+	private Sky sky = Mountains.instance;
 	
 	public double getRoll() {
 		return roll;
@@ -166,15 +169,6 @@ public class PhotoSettings extends AbstractChangeSource {
 		fireChangeEvent();
 	}
 	
-	public boolean isSkyEnabled() {
-		return skyEnabled;
-	}
-	
-	public void setSkyEnabled(boolean skyEnabled) {
-		this.skyEnabled = skyEnabled;
-		fireChangeEvent();
-	}
-	
 	public Color getSkyColor() {
 		return skyColor;
 	}
@@ -227,6 +221,15 @@ public class PhotoSettings extends AbstractChangeSource {
 	
 	public void setExhaustScale(double exhaustScale) {
 		this.exhaustScale = exhaustScale;
+		fireChangeEvent();
+	}
+	
+	public Sky getSky() {
+		return sky;
+	}
+	
+	public void setSky(Sky sky) {
+		this.sky = sky;
 		fireChangeEvent();
 	}
 }
