@@ -151,9 +151,9 @@ public class PhotoPanel extends JPanel implements GLEventListener {
 	
 	@Override
 	public void repaint() {
-		super.repaint();
 		if (canvas != null)
 			((GLAutoDrawable) canvas).display();
+		super.repaint();
 	}
 	
 	
@@ -315,6 +315,7 @@ public class PhotoPanel extends JPanel implements GLEventListener {
 			}
 		}
 		
+		gl.glFrontFace(GL.GL_CCW);
 	}
 	
 	@Override
