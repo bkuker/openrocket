@@ -183,11 +183,11 @@ public final class FlameRenderer {
 	
 	public static void init(GL2 gl) {
 		try {
-			TextureData data = TextureIO.newTextureData(GLProfile.getDefault(), FlameRenderer.class.getResourceAsStream("c-color.png"), GL.GL_RGBA, GL.GL_RGBA, true, null);
+			TextureData data = TextureIO.newTextureData(GLProfile.getDefault(), FlameRenderer.class.getResourceAsStream("/datafiles/flame/c-color.png"), GL.GL_RGBA, GL.GL_RGBA, true, null);
 			smokeT = TextureIO.newTexture(data);
-			data = TextureIO.newTextureData(GLProfile.getDefault(), FlameRenderer.class.getResourceAsStream("c-normal.png"), GL.GL_RGBA, GL.GL_RGBA, true, null);
+			data = TextureIO.newTextureData(GLProfile.getDefault(), FlameRenderer.class.getResourceAsStream("/datafiles/flame/c-normal.png"), GL.GL_RGBA, GL.GL_RGBA, true, null);
 			smokeN = TextureIO.newTexture(data);
-			data = TextureIO.newTextureData(GLProfile.getDefault(), FlameRenderer.class.getResourceAsStream("smoke2.png"), GL.GL_RGBA, GL.GL_RGBA, true, null);
+			data = TextureIO.newTextureData(GLProfile.getDefault(), FlameRenderer.class.getResourceAsStream("/datafiles/flame/smoke2.png"), GL.GL_RGBA, GL.GL_RGBA, true, null);
 			flameT = TextureIO.newTexture(data);
 			
 			String line;
@@ -204,7 +204,7 @@ public final class FlameRenderer {
 			gl.glCompileShader(v);*/
 			
 			int f = gl.glCreateShader(GL2.GL_FRAGMENT_SHADER);
-			BufferedReader brf = new BufferedReader(new InputStreamReader(FlameRenderer.class.getResourceAsStream("smokeShader.glsl")));
+			BufferedReader brf = new BufferedReader(new InputStreamReader(FlameRenderer.class.getResourceAsStream("/datafiles/flame/smokeShader.glsl")));
 			String fsrc = "";
 			while ((line = brf.readLine()) != null) {
 				fsrc += line + "\n";
