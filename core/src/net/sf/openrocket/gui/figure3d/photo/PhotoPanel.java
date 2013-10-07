@@ -264,7 +264,8 @@ public class PhotoPanel extends JPanel implements GLEventListener {
 		float[] lightPosition = new float[] {
 				(float) Math.cos(p.getLightAlt()) * (float) Math.sin(p.getLightAz()),//
 				(float) Math.sin(p.getLightAlt()),//
-				(float) Math.cos(p.getLightAlt()) * (float) Math.cos(p.getLightAz()) //
+				(float) Math.cos(p.getLightAlt()) * (float) Math.cos(p.getLightAz()), //
+				0
 		};
 		
 		gl.glLightfv(GLLightingFunc.GL_LIGHT1, GLLightingFunc.GL_POSITION,
