@@ -27,6 +27,8 @@ public class PhotoSettings extends AbstractChangeSource implements FlameSettings
 	
 	
 	private boolean motionBlurred = false;
+	private boolean threeD = false;
+	
 	private boolean flame = false;
 	private Color flameColor = new Color(255, 100, 50);
 	private boolean smoke = false;
@@ -141,6 +143,15 @@ public class PhotoSettings extends AbstractChangeSource implements FlameSettings
 	
 	public void setMotionBlurred(boolean motionBlurred) {
 		this.motionBlurred = motionBlurred;
+		fireChangeEvent();
+	}
+	
+	public boolean is3D() {
+		return threeD;
+	}
+	
+	public void set3D(boolean threeD) {
+		this.threeD = threeD;
 		fireChangeEvent();
 	}
 	

@@ -250,11 +250,8 @@ public class PhotoSettingsConfig extends JTabbedPane {
 			}
 		});
 
-		addTab(trans.get("PhotoSettingsConfig.tab.effects"), new JPanel(new MigLayout("fill")) {
+		addTab(trans.get("PhotoSettingsConfig.lbl.smokeFlame"), new JPanel(new MigLayout("fill")) {
 			{
-				add(new StyledLabel(trans.get("PhotoSettingsConfig.lbl.smokeFlame"), Style.BOLD));
-				add(new JSeparator(SwingConstants.HORIZONTAL), "span, wrap, growx");
-
 				add(new JLabel(trans.get("PhotoSettingsConfig.lbl.smoke")));
 				BooleanModel smokeModel = new BooleanModel(p, "Smoke");
 				add(new JCheckBox(smokeModel), "split 2, w 15");
@@ -305,11 +302,16 @@ public class PhotoSettingsConfig extends JTabbedPane {
 				DoubleModel exhaustScaleModel = new DoubleModel(p, "ExhaustScale", 100, UnitGroup.UNITS_NONE, 0, 1000);
 				add(new JSpinner(exhaustScaleModel.getSpinnerModel()), "wrap");
 
-				add(new StyledLabel(trans.get("PhotoSettingsConfig.lbl.effects"), Style.BOLD));
-				add(new JSeparator(SwingConstants.HORIZONTAL), "span, wrap, growx");
+			}
+		});
 
+		addTab(trans.get("PhotoSettingsConfig.tab.effects"), new JPanel(new MigLayout("fill")) {
+			{
 				add(new JLabel(trans.get("PhotoSettingsConfig.lbl.speed")));
 				add(new JCheckBox(new BooleanModel(p, "MotionBlurred")), "wrap");
+			
+				add(new JLabel("Anaglyph 3D"));
+				add(new JCheckBox(new BooleanModel(p, "3D")), "wrap");
 			}
 		});
 
