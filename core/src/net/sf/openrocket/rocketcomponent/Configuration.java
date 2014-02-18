@@ -44,6 +44,8 @@ public class Configuration implements Cloneable, ChangeSource, ComponentChangeLi
 	private int refLengthModID = -1;
 	private double cachedRefLength = -1;
 	
+	private int componentListModID = -1;
+	private List<RocketComponent> cachedComponentList = null;
 	
 	private int modID = 0;
 	
@@ -213,6 +215,9 @@ public class Configuration implements Cloneable, ChangeSource, ComponentChangeLi
 		boundsModID = -1;
 		refLengthModID = -1;
 		
+		componentListModID = -1;
+		cachedComponentList = null;
+		
 		// Copy the list before iterating to prevent concurrent modification exceptions.
 		EventListener[] listeners = listenerList.toArray(new EventListener[0]);
 		for (EventListener l : listeners) {
@@ -316,7 +321,16 @@ public class Configuration implements Cloneable, ChangeSource, ComponentChangeLi
 	 */
 	@Override
 	public Iterator<RocketComponent> iterator() {
-		return new ConfigurationIterator();
+		if (rocket.getModID() != componentListModID || cachedComponentList == null) {
+			ArrayList<RocketComponent> v = new ArrayList<RocketComponent>();
+			Iterator<RocketComponent> i = new ConfigurationIterator();
+			while (i.hasNext()) {
+				v.add(i.next());
+			}
+			componentListModID = rocket.getModID();
+			cachedComponentList = Collections.unmodifiableList(v);
+		}
+		return cachedComponentList.iterator();
 	}
 	
 	
@@ -345,6 +359,8 @@ public class Configuration implements Cloneable, ChangeSource, ComponentChangeLi
 			config.boundsModID = -1;
 			config.refLengthModID = -1;
 			rocket.addComponentChangeListener(config);
+			config.componentListModID = -1;
+			config.cachedComponentList = null;
 			return config;
 		} catch (CloneNotSupportedException e) {
 			throw new BugException("clone not supported!", e);
