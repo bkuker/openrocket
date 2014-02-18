@@ -61,32 +61,48 @@ public class ConfigurationTest extends BaseTestCase {
 	}
 	
 	
-	/**
-	 * Test configuration rocket component and motor iterators
-	 */
 	@Test
-	public void testConfigIterators() {
-		
+	public void testConfigIteratorIteration() {
 		/* Setup */
 		Rocket r1 = makeSingleStageTestRocket();
 		Configuration config = r1.getDefaultConfiguration();
 		
 		/* Test */
-		
 		// Test rocket component iterator
 		// TODO: validate iterator iterates correctly
 		for (Iterator<RocketComponent> i = config.iterator(); i.hasNext();) {
 			i.next();
 		}
 		
-		// Rocket component iterator remove method is unsupported, should throw exception
+		/* Cleanup */
+		config.release();
+	}
+	
+	@Test(expected = UnsupportedOperationException.class)
+	public void testConfigIteratorUnmodifiable() {
+		/* Setup */
+		Rocket r1 = makeSingleStageTestRocket();
+		Configuration config = r1.getDefaultConfiguration();
+		
 		try {
+			/* Test */
+			// Rocket component iterator remove method is unsupported, should throw exception	
 			Iterator<RocketComponent> configIterator = config.iterator();
 			configIterator.remove();
-		} catch (UnsupportedOperationException e) {
-			assertTrue(e.getMessage().equals("remove unsupported"));
+		} finally {
+			/* Cleanup */
+			config.release();
 		}
+	}
+	
+	
+	@Test
+	public void testConfigMotorIteratorIteration() {
+		/* Setup */
+		Rocket r1 = makeSingleStageTestRocket();
+		Configuration config = r1.getDefaultConfiguration();
 		
+		/* Test */
 		// Test motor iterator
 		/* TODO: no motors in model Iterator<MotorMount> motorIterator() 
 		 * TODO: validate iterator iterates correctly
@@ -95,17 +111,25 @@ public class ConfigurationTest extends BaseTestCase {
 		}
 		*/
 		
-		// Motor iterator remove method is unsupported, should throw exception
-		try {
-			Iterator<MotorMount> motorIterator = config.motorIterator();
-			motorIterator.remove();
-		} catch (UnsupportedOperationException e) {
-			assertTrue(e.getMessage().equals("remove unsupported"));
-		}
-		
 		/* Cleanup */
 		config.release();
+	}
+	
+	@Test(expected = UnsupportedOperationException.class)
+	public void testConfigMotorIteratorUnmodifiable() {
+		/* Setup */
+		Rocket r1 = makeSingleStageTestRocket();
+		Configuration config = r1.getDefaultConfiguration();
 		
+		try {
+			/* Test */
+			// Motor iterator remove method is unsupported, should throw exception
+			Iterator<MotorMount> motorIterator = config.motorIterator();
+			motorIterator.remove();
+		} finally {
+			/* Cleanup */
+			config.release();
+		}
 	}
 	
 	
