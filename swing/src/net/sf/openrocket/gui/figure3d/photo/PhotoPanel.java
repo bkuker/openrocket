@@ -14,7 +14,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Vector;
 
-import javax.media.opengl.DebugGL2;
 import javax.media.opengl.GL;
 import javax.media.opengl.GL2;
 import javax.media.opengl.GLAutoDrawable;
@@ -93,7 +92,7 @@ public class PhotoPanel extends JPanel implements GLEventListener {
 			public boolean run(final GLAutoDrawable drawable) {
 				PhotoPanel.this.configuration = doc.getDefaultConfiguration();
 				cachedBounds = null;
-				rr = new RealisticRenderer(doc);
+				rr = new RealisticRenderer();
 				rr.init(drawable);
 
 				doc.getDefaultConfiguration().addChangeListener(

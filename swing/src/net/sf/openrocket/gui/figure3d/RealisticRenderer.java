@@ -10,7 +10,6 @@ import javax.media.opengl.fixedfunc.GLMatrixFunc;
 import net.sf.openrocket.appearance.Appearance;
 import net.sf.openrocket.appearance.Decal;
 import net.sf.openrocket.appearance.defaults.DefaultAppearance;
-import net.sf.openrocket.document.OpenRocketDocument;
 import net.sf.openrocket.gui.figure3d.geometry.Geometry;
 import net.sf.openrocket.gui.figure3d.geometry.Geometry.Surface;
 import net.sf.openrocket.motor.Motor;
@@ -27,7 +26,7 @@ public class RealisticRenderer extends RocketRenderer {
 	private final TextureCache textures;
 	private float anisotrophy = 0;
 	
-	public RealisticRenderer(OpenRocketDocument document) {
+	public RealisticRenderer() {
 		textures = new TextureCache();
 	}
 	

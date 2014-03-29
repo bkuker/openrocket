@@ -73,7 +73,6 @@ public class RocketFigure3d extends JPanel implements GLEventListener {
 	private static double fovX = Double.NaN;
 	private static final int CARET_SIZE = 20;
 	
-	private final OpenRocketDocument document;
 	private final Configuration configuration;
 	private Component canvas;
 	
@@ -96,7 +95,6 @@ public class RocketFigure3d extends JPanel implements GLEventListener {
 	RocketRenderer rr = new FigureRenderer();
 	
 	public RocketFigure3d(final OpenRocketDocument document, final Configuration config) {
-		this.document = document;
 		this.configuration = config;
 		this.setLayout(new BorderLayout());
 		
@@ -689,10 +687,10 @@ public class RocketFigure3d extends JPanel implements GLEventListener {
 		
 		switch (t) {
 		case TYPE_FINISHED:
-			newRR = new RealisticRenderer(document);
+			newRR = new RealisticRenderer();
 			break;
 		case TYPE_UNFINISHED:
-			newRR = new UnfinishedRenderer(document);
+			newRR = new UnfinishedRenderer();
 			break;
 		default:
 			newRR = new FigureRenderer();
