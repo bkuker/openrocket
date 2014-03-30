@@ -488,7 +488,6 @@ public class SimPanel extends JPanel implements GLEventListener {
 				//How much wind to add?
 				if (time - times[i] < .5) {
 					//If this is in the last little bit it is prorated
-					System.err.println(time - times[i]);
 					w = w.multiply(time - times[i]);
 				} else {
 					//Otherwise it gets the full half second
