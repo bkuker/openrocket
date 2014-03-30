@@ -39,6 +39,7 @@ import net.sf.openrocket.gui.figure3d.RocketRenderer;
 import net.sf.openrocket.gui.figure3d.TextureCache;
 import net.sf.openrocket.gui.figure3d.photo.sky.builtin.Mountains;
 import net.sf.openrocket.gui.plot.EventGraphics;
+import net.sf.openrocket.models.wind.WindModel;
 import net.sf.openrocket.rocketcomponent.Configuration;
 import net.sf.openrocket.rocketcomponent.RocketComponent;
 import net.sf.openrocket.simulation.FlightDataBranch;
@@ -169,7 +170,7 @@ public class SimPanel extends JPanel implements GLEventListener {
 			else
 				landing.add(c);
 		}
-		settings.setMaxTime(s.getSimulatedData().getFlightTime() );
+		settings.setMaxTime(s.getSimulatedData().getFlightTime());
 		repaint();
 	}
 
@@ -379,7 +380,7 @@ public class SimPanel extends JPanel implements GLEventListener {
 				gl.glTranslated(c.where.x, c.where.y, c.where.z);
 
 				if (c.recovery) {
-					//Nothing
+					// Nothing
 				} else if (c.tumbling) {
 					gl.glRotated(60 * b * settings.getTime(), 1 + b, 1 - b, 1);
 				} else {
@@ -423,6 +424,9 @@ public class SimPanel extends JPanel implements GLEventListener {
 				gl.glPopMatrix();
 			}
 		}
+
+		drawSmokeTrail(s.getSimulatedData().getBranch(0), drawable, settings.getTime(), s.getSimulatedConditions()
+				.toSimulationConditions().getWindModel());
 	}
 
 	private class Conditions {
@@ -433,6 +437,45 @@ public class SimPanel extends JPanel implements GLEventListener {
 		boolean tumbling = false;
 		boolean recovery = true;
 	};
+
+	private void drawSmokeTrail(final FlightDataBranch b, final GLAutoDrawable drawable, final double maxTime,
+			final WindModel wind) {
+
+		List<Double> t = b.get(FlightDataType.TYPE_TIME);
+		List<Double> x = b.get(FlightDataType.TYPE_POSITION_X);
+		List<Double> y = b.get(FlightDataType.TYPE_POSITION_Y);
+		List<Double> z = b.get(FlightDataType.TYPE_ALTITUDE);
+
+		final int n;
+		{
+			int i = 0;
+			final int max = b.getLength();
+			for (i = 0; i < max && t.get(i) <= maxTime; i++) {
+			}
+			n = i;
+		}
+
+		final Coordinate[] coords = new Coordinate[n];
+		final int STRIDE = 5;
+
+		for (int i = 0; i < n; i+=STRIDE) {
+			coords[i] = new Coordinate(x.get(i), y.get(i), z.get(i));
+			final double time = t.get(i);
+			final double dt = i < STRIDE ? 0 : t.get(i - STRIDE) - time;
+			for (int j = 0; j < i; j+=STRIDE) {
+				coords[j] = coords[j].add(wind.getWindVelocity(time, coords[j].x).multiply(dt));
+			}
+		}
+
+		gl.glLineWidth(3);
+		gl.glBegin(GL.GL_LINE_STRIP);
+		gl.glColor4d(.5, .5, .5, .5);
+		for (int i = 0; i < n; i+=STRIDE) {
+			gl.glVertex3d(coords[i].x, coords[i].y, coords[i].z);
+		}
+		gl.glEnd();
+
+	}
 
 	public Conditions drawBranch(final FlightDataBranch b, final boolean highlight, final double a,
 			final GLAutoDrawable drawable, final double maxTime) {
