@@ -3,15 +3,9 @@ package net.sf.openrocket.gui.figure3d.simviz;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
-import java.awt.Font;
-import java.awt.Graphics2D;
 import java.awt.Rectangle;
-import java.awt.Shape;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
-import java.awt.font.FontRenderContext;
-import java.awt.geom.FlatteningPathIterator;
-import java.awt.image.BufferedImage;
 import java.lang.reflect.Method;
 import java.util.Collection;
 import java.util.Collections;
@@ -43,7 +37,6 @@ import net.sf.openrocket.document.Simulation;
 import net.sf.openrocket.gui.figure3d.RealisticRenderer;
 import net.sf.openrocket.gui.figure3d.RocketRenderer;
 import net.sf.openrocket.gui.figure3d.TextureCache;
-import net.sf.openrocket.gui.figure3d.photo.sky.Sky;
 import net.sf.openrocket.gui.figure3d.photo.sky.builtin.Mountains;
 import net.sf.openrocket.gui.plot.EventGraphics;
 import net.sf.openrocket.rocketcomponent.Configuration;
@@ -130,7 +123,7 @@ public class SimPanel extends JPanel implements GLEventListener {
 	GLUquadric q;
 
 	RocketRenderer rr = new RealisticRenderer();
-TextureCache tc = new TextureCache();
+	TextureCache tc = new TextureCache();
 
 	GroundGrid gg = new GroundGrid();
 
@@ -176,7 +169,7 @@ TextureCache tc = new TextureCache();
 			else
 				landing.add(c);
 		}
-		settings.setMaxTime(s.getSimulatedData().getFlightTime()/4);
+		settings.setMaxTime(s.getSimulatedData().getFlightTime() );
 		repaint();
 	}
 
@@ -297,7 +290,7 @@ TextureCache tc = new TextureCache();
 
 		gl.glClearColor(.80f, .80f, 1, 1);
 		gl.glClear(GL.GL_COLOR_BUFFER_BIT | GL.GL_DEPTH_BUFFER_BIT);
-		
+
 		gl.glDisable(GLLightingFunc.GL_LIGHTING);
 
 		gl.glMatrixMode(GLMatrixFunc.GL_PROJECTION);
@@ -306,15 +299,7 @@ TextureCache tc = new TextureCache();
 		gl.glMatrixMode(GLMatrixFunc.GL_MODELVIEW);
 
 		gl.glLoadIdentity();
-		
-		
-		
-		
-		
-		
-		
-		
-		
+
 		// Draw the sky
 		gl.glPushMatrix();
 
@@ -326,14 +311,6 @@ TextureCache tc = new TextureCache();
 		Mountains.instance.draw(gl, tc);
 		gl.glDepthMask(true);
 		gl.glPopMatrix();
-		
-		
-		
-		
-		
-		
-		
-		
 
 		glu.gluLookAt(0, 0, viewDist, 0, 0, 0, 0, 1, 0);
 
@@ -401,13 +378,15 @@ TextureCache tc = new TextureCache();
 				// gl.glLoadIdentity();
 				gl.glTranslated(c.where.x, c.where.y, c.where.z);
 
-				if (c.tumbling) {
-					gl.glRotated(60*b * settings.getTime(), 1+b, 1-b, 1);
+				if (c.recovery) {
+					//Nothing
+				} else if (c.tumbling) {
+					gl.glRotated(60 * b * settings.getTime(), 1 + b, 1 - b, 1);
 				} else {
 					log.debug("Phi {}", c.phi);
-					//Az
+					// Az
 					gl.glRotated(90 - (c.phi * (180.0 / Math.PI)), 0, 0, 1);
-					//Alt (Zenith angle)
+					// Alt (Zenith angle)
 					gl.glRotated(90 - (c.theta * (180.0 / Math.PI)), 1, 0, 0);
 				}
 
@@ -450,9 +429,9 @@ TextureCache tc = new TextureCache();
 		Coordinate where;
 		double theta, phi;
 		boolean valid = false;
-		boolean isSustainer = false;
 		int stagesSeparated = 0;
 		boolean tumbling = false;
+		boolean recovery = true;
 	};
 
 	public Conditions drawBranch(final FlightDataBranch b, final boolean highlight, final double a,
@@ -490,6 +469,8 @@ TextureCache tc = new TextureCache();
 					c.stagesSeparated++;
 				if (e.getType() == FlightEvent.Type.TUMBLE)
 					c.tumbling = true;
+				if (e.getType() == FlightEvent.Type.RECOVERY_DEVICE_DEPLOYMENT)
+					c.recovery = true;
 
 				if (trackColorTypes.contains(e.getType())) {
 					// Change the track color based on this event
