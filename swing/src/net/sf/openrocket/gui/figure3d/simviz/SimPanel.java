@@ -435,7 +435,7 @@ public class SimPanel extends JPanel implements GLEventListener {
 		boolean valid = false;
 		int stagesSeparated = 0;
 		boolean tumbling = false;
-		boolean recovery = true;
+		boolean recovery = false;
 	};
 
 	private void drawSmokeTrail(final FlightDataBranch b, final GLAutoDrawable drawable, final double maxTime,
@@ -446,7 +446,7 @@ public class SimPanel extends JPanel implements GLEventListener {
 		List<Double> y = b.get(FlightDataType.TYPE_POSITION_Y);
 		List<Double> z = b.get(FlightDataType.TYPE_ALTITUDE);
 
-		//Find the index of the last FlightDataEntry before MaxTime
+		// Find the index of the last FlightDataEntry before MaxTime
 		final int n;
 		{
 			int i = 0;
@@ -456,48 +456,52 @@ public class SimPanel extends JPanel implements GLEventListener {
 			n = i;
 		}
 
-		//Figure out how many coordinates to do smoke for.
-		//Every Nth (5th) one PLUS the last one
-		final int STRIDE = 5;
+		// Figure out how many coordinates to do smoke for.
+		// Every Nth (5th) one PLUS the last one
+		final int STRIDE = 1;
 		final int count = n / STRIDE + (n % STRIDE == 0 ? 0 : 1);
 
-		//If there are none do no work
+		// If there are none do no work
 		if (count == 0)
 			return;
 
-		//Allocate arrays to keep the stuff
+		// Allocate arrays to keep the stuff
 		final Coordinate[] coords = new Coordinate[count];
 		final double[] times = new double[count];
 
-		//Fill in every Nth flight data point
+		// Fill in every Nth flight data point
 		for (int i = 0; i < count; i++) {
 			coords[i] = new Coordinate(x.get(i * STRIDE), y.get(i * STRIDE), z.get(i * STRIDE));
 			times[i] = t.get(i * STRIDE);
 		}
-		//Fill in the last one.
+		// Fill in the last one.
 		coords[count - 1] = new Coordinate(x.get(n - 1), y.get(n - 1), z.get(n - 1));
 		times[count - 1] = t.get(n - 1);
 
-		//Get the wind every half second
-		for (double time = 0; time < maxTime; time += .5) {
+		// Get the wind every half second
+		final double DT = .1;
+		for (double time = 0; time < maxTime; time += DT) {
 			for (int i = 0; i < count - 1; i++) {
 				Coordinate w = wind.getWindVelocity(time, coords[i].z);
-				//Do not add if the coordinate is newer than the time
+				// Do not add if the coordinate is newer than the time
 				if (times[i] > time)
 					break;
-				//How much wind to add?
-				if (time - times[i] < .5) {
-					//If this is in the last little bit it is prorated
+				// How much wind to add?
+				if (time - times[i] < DT) {
+					// If this is in the last little bit it is prorated
 					w = w.multiply(time - times[i]);
 				} else {
-					//Otherwise it gets the full half second
-					w = w.multiply(.5);
+					// Otherwise it gets the full half second
+					w = w.multiply(DT);
 				}
 				coords[i] = coords[i].sub(w);
 			}
 		}
 
-		//For now just draw a line
+		// For now just draw a line
+		/**/
+
+		gl.glEnable(GL.GL_BLEND);
 		gl.glLineWidth(3);
 		gl.glBegin(GL.GL_LINE_STRIP);
 		gl.glColor4d(.5, .5, .5, .5);
@@ -505,6 +509,16 @@ public class SimPanel extends JPanel implements GLEventListener {
 			gl.glVertex3d(coords[i].x, coords[i].y, coords[i].z);
 		}
 		gl.glEnd();
+
+		for (int i = count-1; i >= 0; i--) {
+			gl.glColor4d(.5, .5, .5, .8 - MathUtil.clamp((maxTime - times[i]) / 6, 0, .8));
+			gl.glPushMatrix();
+			gl.glTranslated(coords[i].x, coords[i].y, coords[i].z);
+			double d = maxTime - times[i];
+			//d = Math.min(5, d);
+			glu.gluSphere(q, d, 10, 10);
+			gl.glPopMatrix();
+		}
 
 	}
 
