@@ -446,6 +446,7 @@ public class SimPanel extends JPanel implements GLEventListener {
 		List<Double> y = b.get(FlightDataType.TYPE_POSITION_Y);
 		List<Double> z = b.get(FlightDataType.TYPE_ALTITUDE);
 
+		//Find the index of the last FlightDataEntry before MaxTime
 		final int n;
 		{
 			int i = 0;
@@ -455,22 +456,53 @@ public class SimPanel extends JPanel implements GLEventListener {
 			n = i;
 		}
 
-		final Coordinate[] coords = new Coordinate[n];
+		//Figure out how many coordinates to do smoke for.
+		//Every Nth (5th) one PLUS the last one
 		final int STRIDE = 5;
+		final int count = n / STRIDE + (n % STRIDE == 0 ? 0 : 1);
 
-		for (int i = 0; i < n; i+=STRIDE) {
-			coords[i] = new Coordinate(x.get(i), y.get(i), z.get(i));
-			final double time = t.get(i);
-			final double dt = i < STRIDE ? 0 : t.get(i - STRIDE) - time;
-			for (int j = 0; j < i; j+=STRIDE) {
-				coords[j] = coords[j].add(wind.getWindVelocity(time, coords[j].x).multiply(dt));
+		//If there are none do no work
+		if (count == 0)
+			return;
+
+		//Allocate arrays to keep the stuff
+		final Coordinate[] coords = new Coordinate[count];
+		final double[] times = new double[count];
+
+		//Fill in every Nth flight data point
+		for (int i = 0; i < count; i++) {
+			coords[i] = new Coordinate(x.get(i * STRIDE), y.get(i * STRIDE), z.get(i * STRIDE));
+			times[i] = t.get(i * STRIDE);
+		}
+		//Fill in the last one.
+		coords[count - 1] = new Coordinate(x.get(n - 1), y.get(n - 1), z.get(n - 1));
+		times[count - 1] = t.get(n - 1);
+
+		//Get the wind every half second
+		for (double time = 0; time < maxTime; time += .5) {
+			for (int i = 0; i < count - 1; i++) {
+				Coordinate w = wind.getWindVelocity(time, coords[i].z);
+				//Do not add if the coordinate is newer than the time
+				if (times[i] > time)
+					break;
+				//How much wind to add?
+				if (time - times[i] < .5) {
+					//If this is in the last little bit it is prorated
+					System.err.println(time - times[i]);
+					w = w.multiply(time - times[i]);
+				} else {
+					//Otherwise it gets the full half second
+					w = w.multiply(.5);
+				}
+				coords[i] = coords[i].sub(w);
 			}
 		}
 
+		//For now just draw a line
 		gl.glLineWidth(3);
 		gl.glBegin(GL.GL_LINE_STRIP);
 		gl.glColor4d(.5, .5, .5, .5);
-		for (int i = 0; i < n; i+=STRIDE) {
+		for (int i = 0; i < count; i++) {
 			gl.glVertex3d(coords[i].x, coords[i].y, coords[i].z);
 		}
 		gl.glEnd();
@@ -530,7 +562,6 @@ public class SimPanel extends JPanel implements GLEventListener {
 				c.where = new Coordinate(x.get(i), y.get(i), z.get(i));
 				c.theta = b.get(FlightDataType.TYPE_ORIENTATION_THETA).get(i);
 				c.phi = b.get(FlightDataType.TYPE_ORIENTATION_PHI).get(i);
-				System.err.println(i);
 				break;
 			}
 			c.valid = true;
