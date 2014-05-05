@@ -7,6 +7,7 @@ import java.io.File;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.JSlider;
+import javax.swing.JSpinner;
 
 import net.sf.openrocket.database.Databases;
 import net.sf.openrocket.document.OpenRocketDocument;
@@ -36,7 +37,6 @@ public class SimFrame extends JFrame {
 	private static final Logger log = LoggerFactory.getLogger(SimFrame.class);
 
 	private SimPanel simPanel;
-	private JSlider timeSlider;
 
 	public SimFrame() {
 		setSize(1024, 768);
@@ -50,8 +50,14 @@ public class SimFrame extends JFrame {
 		DoubleModel maxTime = new DoubleModel(simPanel.settings, "MaxTime", UnitGroup.UNITS_TIME_STEP);
 		DoubleModel time = new DoubleModel(simPanel.settings, "Time", UnitGroup.UNITS_TIME_STEP);
 
-		timeSlider = new BasicSlider(time.getSliderModel(new DoubleModel(0), maxTime));
-		p.add(timeSlider, BorderLayout.SOUTH);
+		JSlider timeSlider = new BasicSlider(time.getSliderModel(new DoubleModel(0), maxTime));
+		JSpinner timeSpinner = new JSpinner(time.getSpinnerModel());
+		
+		JPanel bottom = new JPanel();
+		bottom.add(timeSpinner);
+		bottom.add(timeSlider);
+		
+		p.add(bottom, BorderLayout.SOUTH);
 
 		setContentPane(p);
 
@@ -99,7 +105,7 @@ public class SimFrame extends JFrame {
 
 		// Load a model
 		GeneralRocketLoader grl = new GeneralRocketLoader(new File(
-				"/Users/bkuker/git/openrocket/swing/resources/datafiles/examples/Roll-stabilized rocket.ork"));
+				"/Users/bkuker/git/openrocket/swing/resources/datafiles/examples/Three-stage rocket.ork"));
 		final OpenRocketDocument doc = grl.load();
 		Simulation s = doc.getSimulation(0);
 		s.simulate();
